@@ -142,7 +142,7 @@ public class DataInitializer {
                 .ragioneSociale("Cliente Esempio")
                 .indirizzoFornitura("Via Roma 1")
                 .pod("IT001E73237265")
-                .tipologiaCliente(TipoCliente.NON_RESIDENTE)
+                .tipologiaCliente(TipoCliente.DOMESTICO_NON_RESIDENTE)
                 .opzioneTariffaria("Utenza domestica non residente")
                 .potenzaImpegnata(new BigDecimal("3.00"))
                 .potenzaDisponibile(new BigDecimal("3.30"))

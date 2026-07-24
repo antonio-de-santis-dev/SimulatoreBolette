@@ -206,7 +206,7 @@ public class ConfrontoService {
     }
 
     private BigDecimal aliquotaDaTipoCliente(TipoCliente tipo, ParametriGestore parametri) {
-        boolean nonDomestico = tipo == TipoCliente.ATTIVITA_PRODUTTIVE;
+        boolean nonDomestico = tipo != null && !tipo.isUsoDomestico();
         BigDecimal aliquota = nonDomestico ? parametri.getIvaNonDomestico() : parametri.getIvaDomestico();
         if (aliquota == null) {
             aliquota = parametri.getIvaDomestico();

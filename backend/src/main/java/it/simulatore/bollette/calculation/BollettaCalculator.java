@@ -91,7 +91,7 @@ public class BollettaCalculator {
             .add(oneri)
             .add(accise);
 
-        BigDecimal aliquotaIva = tipoCliente == TipoCliente.RESIDENTE 
+        BigDecimal aliquotaIva = tipoCliente.isUsoDomestico()
             ? IVA_DOMESTICO : IVA_NON_DOMESTICO;
         BigDecimal iva = imponibile.multiply(aliquotaIva).setScale(4, RoundingMode.HALF_UP);
         risultato.setSpesaIva(iva);
@@ -265,7 +265,7 @@ public class BollettaCalculator {
 
         BigDecimal totale = consumi.getTotale().multiply(asos.add(arim));
 
-        if (tipoCliente != TipoCliente.RESIDENTE) {
+        if (!tipoCliente.isResidente()) {
             BigDecimal quotaFissaNonRes = params.getOneriFissaNonRes() != null 
                 ? params.getOneriFissaNonRes() : new BigDecimal("14.80");
             totale = totale.add(quotaFissaNonRes.multiply(MESE_BIMESTRE).divide(
@@ -280,8 +280,8 @@ public class BollettaCalculator {
             TipoCliente tipoCliente, 
             ParametriBolletta params) {
 
-        if (tipoCliente != TipoCliente.RESIDENTE) {
-            BigDecimal accisaPiena = params.getAccisaPiena() != null 
+        if (!tipoCliente.isResidente()) {
+            BigDecimal accisaPiena = params.getAccisaPiena() != null
                 ? params.getAccisaPiena() : new BigDecimal("0.0227");
             return consumi.getTotale().multiply(accisaPiena).setScale(4, RoundingMode.HALF_UP);
         }

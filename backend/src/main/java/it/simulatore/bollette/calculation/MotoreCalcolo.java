@@ -34,7 +34,7 @@ public class MotoreCalcolo {
         return switch (base) {
             case FISSO_MESE, POD_MESE -> BigDecimal.ONE;
             case KW_MESE -> nz(potenzaKw);
-            case KWH_NETTI -> c.getTotaleNetto();
+            case KWH_NETTI, KWH_NETTI_SCAGLIONE -> c.getTotaleNetto();
             case KWH_CON_PERDITE -> c.getTotaleConPerdite();
             case KWH_F1 -> nz(c.getF1());
             case KWH_F2 -> nz(c.getF2());

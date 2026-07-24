@@ -1,18 +1,23 @@
 package it.simulatore.bollette.enums;
 
 /**
- * Base di quantita su cui si applica un corrispettivo per ottenere l'importo di riga
- * ({@code TOTALE = CORRISPETTIVO x QUANTITA}).
+ * Base di quantita su cui si applica un corrispettivo ({@code TOTALE = CORRISPETTIVO x QUANTITA}).
  * <p>
- * Distinzione critica del modello Excel: {@link #KWH_NETTI} (F1+F2+F3) contro
- * {@link #KWH_CON_PERDITE} (netti + perdite di rete arrotondate). Le due basi non
- * coincidono e vanno usate dalle voci corrette.
+ * Distinzioni critiche:
+ * <ul>
+ *   <li>{@link #KWH_NETTI} (F1+F2+F3): usata dall'accisa;</li>
+ *   <li>{@link #KWH_NETTI_SCAGLIONE}: quota del consumo che ricade in uno scaglione tariffario,
+ *       usata da trasporto energia e oneri variabili;</li>
+ *   <li>{@link #KWH_CON_PERDITE}: netti + perdite di rete, usata dal dispacciamento e dal
+ *       mercato capacita.</li>
+ * </ul>
  */
 public enum BaseQuantita {
     FISSO_MESE("Importo fisso mensile"),
     POD_MESE("Per POD al mese"),
     KW_MESE("Per kW al mese"),
     KWH_NETTI("kWh consumati"),
+    KWH_NETTI_SCAGLIONE("kWh consumati ripartiti per scaglione"),
     KWH_CON_PERDITE("kWh consumati + perdite di rete"),
     KWH_F1("kWh fascia F1"),
     KWH_F2("kWh fascia F2"),
