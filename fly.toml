@@ -1,47 +1,46 @@
-# Configurazione Fly.io — vedi DEPLOY_FLYIO.md.
-# Il nome deve coincidere con l'app creata su Fly (fly apps list).
-app = "simulatorebolette"
-primary_region = "fra"
+# fly.toml app configuration file generated for simulatorebolette on 2026-07-24T11:28:46Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'simulatorebolette'
+primary_region = 'fra'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8080"
-  # Lo schema e' gestito da Flyway; Hibernate valida soltanto (NON usare "update").
-  DDL_AUTO = "validate"
-  FLYWAY_ENABLED = "true"
-  SHOW_SQL = "false"
-  LOG_LEVEL = "INFO"
-  DB_POOL_SIZE = "5"
-  JAVA_OPTS = "-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k"
+  DB_POOL_SIZE = '5'
+  DDL_AUTO = 'validate'
+  FLYWAY_ENABLED = 'true'
+  JAVA_OPTS = '-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k'
+  LOG_LEVEL = 'INFO'
+  PORT = '8080'
+  SHOW_SQL = 'false'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  # ══════════════════════════════════════════════════════
-  #  Queste due righe impediscono lo sleep della VM.
-  # ══════════════════════════════════════════════════════
-  auto_stop_machines = false
-  min_machines_running = 1
+  auto_stop_machines = 'off'
   auto_start_machines = true
-  processes = ["app"]
+  min_machines_running = 1
+  processes = ['app']
 
   [http_service.concurrency]
-    type = "requests"
-    soft_limit = 40
+    type = 'requests'
     hard_limit = 60
+    soft_limit = 40
 
-# Health check: Fly riavvia la VM se il backend non risponde.
-[[http_service.checks]]
-  interval = "30s"
-  timeout = "5s"
-  grace_period = "90s"     # Spring Boot + Flyway impiegano ~30-60s ad avviarsi
-  method = "GET"
-  path = "/actuator/health"
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '1m30s'
+    method = 'GET'
+    path = '/actuator/health'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"          # 256mb e' al limite per Spring Boot
-  cpu_kind = "shared"
+  size = 'shared-cpu-1x'
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 512
