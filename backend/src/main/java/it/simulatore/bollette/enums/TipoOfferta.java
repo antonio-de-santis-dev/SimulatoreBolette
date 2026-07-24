@@ -2,8 +2,7 @@ package it.simulatore.bollette.enums;
 
 public enum TipoOfferta {
     PREZZO_FISSO("Prezzo fisso"),
-    INDICIZZATA_PUN("Indicizzata PUN"),
-    MISTA("Mista");
+    INDICIZZATA_PUN("Indicizzata PUN");
 
     private final String descrizione;
 
