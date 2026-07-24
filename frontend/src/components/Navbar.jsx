@@ -17,8 +17,11 @@ function Navbar() {
   return (
     <>
       {/* ── Barra superiore ──────────────────────────────────────────────
-          Mobile: solo il logo (h-14). Desktop (md+): logo + 6 link con etichetta. */}
-      <nav className="bg-white shadow-sm border-b">
+          Mobile: solo il logo (h-14). Desktop (md+): logo + 6 link con etichetta.
+          sticky + pt safe-area: con viewport-fit=cover la webview parte da y=0
+          (dietro il notch); la barra bianca opaca copre la status bar iOS e resta
+          in cima allo scroll, cosi' nessun contenuto finisce sotto l'orario. */}
+      <nav className="sticky top-0 z-30 bg-white shadow-sm border-b pt-[env(safe-area-inset-top)]">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 md:h-16">
             <Link to="/" className="flex items-center gap-2">

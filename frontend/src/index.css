@@ -25,6 +25,18 @@
   }
 }
 
+/* Su iOS Safari input[type=date] ha una larghezza intrinseca minima e ignora
+   w-full, sfondando la card. Azzeriamo l'appearance nativa cosi' rispetta la
+   larghezza del contenitore e ha lo stesso aspetto degli altri input. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
 @layer components {
   .card {
     @apply bg-white rounded-xl shadow-md p-6;

@@ -221,7 +221,7 @@ const Sezione = ({ titolo, children }) => (
 )
 const Grid = ({ children }) => <div className="grid md:grid-cols-3 gap-3">{children}</div>
 const Campo = ({ l, v, on, t = 'text' }) => (
-  <label className="text-sm block">
+  <label className="text-sm block min-w-0">
     <span className="text-gray-500">{l}</span>
     <input className="input" type={t} step="0.01" value={v} onChange={(e) => on(e.target.value)} />
   </label>
