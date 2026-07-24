@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pun")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class PunMensileController {
 
     private final PunMensileRepository punRepo;

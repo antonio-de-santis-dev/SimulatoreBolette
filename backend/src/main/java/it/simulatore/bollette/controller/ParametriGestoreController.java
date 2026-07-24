@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/parametri-gestore")
 @RequiredArgsConstructor
-@CrossOrigin
 public class ParametriGestoreController {
 
     private final ParametriGestoreService service;

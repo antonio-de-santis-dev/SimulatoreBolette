@@ -1,0 +1,47 @@
+# Configurazione Fly.io — vedi DEPLOY_FLYIO.md.
+# Rinomina "app" se il nome e' gia' occupato su Fly.
+app = "simulatore-bollette"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  # Lo schema e' gestito da Flyway; Hibernate valida soltanto (NON usare "update").
+  DDL_AUTO = "validate"
+  FLYWAY_ENABLED = "true"
+  SHOW_SQL = "false"
+  LOG_LEVEL = "INFO"
+  DB_POOL_SIZE = "5"
+  JAVA_OPTS = "-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # ══════════════════════════════════════════════════════
+  #  Queste due righe impediscono lo sleep della VM.
+  # ══════════════════════════════════════════════════════
+  auto_stop_machines = false
+  min_machines_running = 1
+  auto_start_machines = true
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 40
+    hard_limit = 60
+
+# Health check: Fly riavvia la VM se il backend non risponde.
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "90s"     # Spring Boot + Flyway impiegano ~30-60s ad avviarsi
+  method = "GET"
+  path = "/actuator/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"          # 256mb e' al limite per Spring Boot
+  cpu_kind = "shared"
+  cpus = 1

@@ -15,7 +15,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/confronti")
 @RequiredArgsConstructor
-@CrossOrigin
 public class ConfrontoController {
 
     private final ConfrontoService service;

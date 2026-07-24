@@ -14,7 +14,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/bollette-concorrenti")
 @RequiredArgsConstructor
-@CrossOrigin
 public class BollettaConcorrenteController {
 
     private final BollettaConcorrenteService service;

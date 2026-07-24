@@ -1,33 +1,56 @@
 server:
-  port: 8080
+  # Fly.io (e altri PaaS) assegnano la porta via env PORT; in locale resta 8080.
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,application/javascript,application/json
+  shutdown: graceful
 
 spring:
   application:
     name: simulatore-bollette-luce
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/simulatore_luce
-    username: simulatore
-    password: simulatore123
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/simulatore_luce}
+    username: ${SPRING_DATASOURCE_USERNAME:simulatore}
+    password: ${SPRING_DATASOURCE_PASSWORD:simulatore123}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+      minimum-idle: 1
+      connection-timeout: 30000
 
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:true}
     baseline-on-migrate: true
 
   jpa:
+    # Lo schema e' gestito da Flyway; Hibernate lo valida soltanto.
     hibernate:
-      ddl-auto: validate
-    show-sql: true
+      ddl-auto: ${DDL_AUTO:validate}
+    show-sql: ${SHOW_SQL:false}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false
         physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
 
   jackson:
     serialization:
       write-dates-as-timestamps: false
+
+  web:
+    resources:
+      static-locations: classpath:/static/
+      cache:
+        cachecontrol:
+          max-age: 3600
+
+# Origini CORS ammesse (in produzione front e API sono sulla stessa origine, quindi
+# questo serve solo allo sviluppo con Vite). Sovrascrivibile via APP_CORS_ALLOWED_ORIGINS.
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
 springdoc:
   api-docs:
@@ -35,6 +58,16 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
-    it.simulatore.bollette: DEBUG
+    it.simulatore.bollette: ${LOG_LEVEL:INFO}
+    org.hibernate.SQL: WARN
