@@ -1,6 +1,10 @@
 server:
   # Fly.io (e altri PaaS) assegnano la porta via env PORT; in locale resta 8080.
   port: ${PORT:8080}
+  # Dietro il proxy TLS di Fly: senza questo Spring vede http + host interno e tratta
+  # come cross-origin anche le richieste same-origin del browser (Origin
+  # https://simulatorebolette.fly.dev), causando il 403 "Invalid CORS request" sulle POST.
+  forward-headers-strategy: framework
   compression:
     enabled: true
     mime-types: text/html,text/css,application/javascript,application/json
