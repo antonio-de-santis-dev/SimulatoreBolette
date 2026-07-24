@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Plus, Trash2 } from 'lucide-react'
 
-const API_URL = 'http://localhost:8080/api'
+const API_URL = '/api'
 
 function Offerte() {
   const [offerte, setOfferte] = useState([])

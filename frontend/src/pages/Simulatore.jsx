@@ -10,7 +10,7 @@ import {
   Tooltip as ReTooltip
 } from 'recharts'
 
-const API_URL = 'http://localhost:8080/api'
+const API_URL = '/api'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 

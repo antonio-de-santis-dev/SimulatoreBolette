@@ -1,0 +1,29 @@
+app = "simulatorebolette"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  # Frontend e backend sono sulla stessa origine: whitelist CORS con il dominio reale.
+  APP_CORS_ALLOWED_ORIGINS = "https://simulatorebolette.fly.dev"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.checks]
+    [[http_service.checks.http]]
+      method = "GET"
+      path = "/actuator/health"
+      interval = "15s"
+      timeout = "5s"
+      grace_period = "30s"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

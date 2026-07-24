@@ -3,7 +3,7 @@ import axios from 'axios'
 import { Calendar, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = 'http://localhost:8080/api'
+const API_URL = '/api'
 
 function Storico() {
   const [simulazioni, setSimulazioni] = useState([])

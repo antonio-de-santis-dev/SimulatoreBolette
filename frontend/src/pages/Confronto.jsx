@@ -3,7 +3,7 @@ import axios from 'axios'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Trophy } from 'lucide-react'
 
-const API_URL = 'http://localhost:8080/api'
+const API_URL = '/api'
 
 function Confronto() {
   const [offerte, setOfferte] = useState([])

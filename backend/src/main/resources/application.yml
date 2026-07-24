@@ -1,14 +1,21 @@
 server:
   port: 8080
+  # Dietro il proxy TLS di Fly.io: senza questo Spring vede http + host interno e
+  # tratta come cross-origin anche le richieste same-origin del browser (Origin
+  # https://simulatorebolette.fly.dev), scatenando il 403 "Invalid CORS request".
+  forward-headers-strategy: framework
+  error:
+    whitelabel:
+      enabled: false
 
 spring:
   application:
     name: simulatore-bollette-luce
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/simulatore_luce
-    username: simulatore
-    password: simulatore123
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/simulatore_luce}
+    username: ${SPRING_DATASOURCE_USERNAME:simulatore}
+    password: ${SPRING_DATASOURCE_PASSWORD:simulatore123}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -23,6 +30,21 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+
+  web:
+    resources:
+      static-locations: classpath:/static/
+      add-mappings: true
+      cache:
+        cachecontrol:
+          max-age: 3600
+
+  mvc:
+    throw-exception-if-no-handler-found: false
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
 springdoc:
   api-docs:

@@ -1,0 +1,12 @@
+# Build backend
+backend/target/
+
+# Statici del frontend generati durante il build dell'immagine (non versionare)
+backend/src/main/resources/static/
+
+# Build frontend
+frontend/dist/
+frontend/node_modules/
+
+# Log e temporanei
+*.log
