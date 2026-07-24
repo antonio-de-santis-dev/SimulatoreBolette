@@ -39,12 +39,13 @@ public class BollettaCalculator {
 
         ConsumiFasce consumi = distribuisciConsumi(request);
 
-        RisultatoCalcolo risultato = calcolaComponenti(
-            consumi, 
-            request.getTipoCliente(), 
+        RisultatoCalcolo risultato = calcolaPerOfferta(
+            consumi,
+            request.getTipoCliente(),
             request.getPotenzaContrattuale(),
             request.getTipoTariffa(),
             params,
+            null,
             null
         );
 
