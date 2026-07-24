@@ -1,2 +1,3 @@
 /home/user/SimulatoreBolette/backend/src/test/java/it/simulatore/bollette/integration/ConfrontoIntegrationTest.java
+/home/user/SimulatoreBolette/backend/src/test/java/it/simulatore/bollette/integration/ApiEndToEndTest.java
 /home/user/SimulatoreBolette/backend/src/test/java/it/simulatore/bollette/calculation/BollettaCalculatorTest.java

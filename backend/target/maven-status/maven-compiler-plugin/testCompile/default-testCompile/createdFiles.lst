@@ -1,2 +1,3 @@
+it/simulatore/bollette/integration/ApiEndToEndTest.class
 it/simulatore/bollette/calculation/BollettaCalculatorTest.class
 it/simulatore/bollette/integration/ConfrontoIntegrationTest.class

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: it.simulatore.bollette.integration.ConfrontoIntegrationTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.641 s -- in it.simulatore.bollette.integration.ConfrontoIntegrationTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.256 s -- in it.simulatore.bollette.integration.ConfrontoIntegrationTest
