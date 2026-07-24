@@ -1,0 +1,18 @@
+# Credenziali docker
+docker/.env
+
+# Build backend
+backend/target/
+*.log
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store

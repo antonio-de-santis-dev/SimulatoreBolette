@@ -1,125 +1,108 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "=========================================="
-echo "  Simulatore Bollette Luce - Avvio"
-echo "=========================================="
+# ════════════════════════════════════════════════════════════════════════════
+#  Simulatore Bollette Luce — avvio
+#  Uso: ./avvia.sh [docker|local]   (default: docker)
+# ════════════════════════════════════════════════════════════════════════════
 
-# Colori
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+MODE="${1:-docker}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Verifica prerequisiti
-echo ""
-echo "[CHECK] Verifica prerequisiti..."
+GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
+ok()   { echo -e "${GREEN}[OK]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+err()  { echo -e "${RED}[ERRORE]${NC} $1"; }
 
-if ! command -v java &> /dev/null; then
-    echo -e "${RED}[ERRORE] Java non trovato. Installa OpenJDK 17:${NC}"
-    echo "  sudo apt install openjdk-17-jdk"
+wait_for() {  # wait_for <url> <nome> <tentativi>
+  local url="$1" nome="$2" tentativi="${3:-60}"
+  for _ in $(seq 1 "$tentativi"); do
+    if curl -sf "$url" >/dev/null 2>&1; then ok "$nome pronto"; return 0; fi
+    sleep 2
+  done
+  err "$nome non risponde ($url)"; return 1
+}
+
+porta_libera() {  # porta_libera <porta>
+  if command -v lsof >/dev/null 2>&1 && lsof -i ":$1" -sTCP:LISTEN >/dev/null 2>&1; then
+    warn "La porta $1 e' gia' occupata"
+    return 1
+  fi
+  return 0
+}
+
+richiedi() {  # richiedi <comando> <versione-minima> <hint>
+  if ! command -v "$1" >/dev/null 2>&1; then
+    err "$1 non trovato. Versione minima consigliata: $2. $3"
     exit 1
-fi
+  fi
+}
 
-if ! command -v node &> /dev/null; then
-    echo -e "${RED}[ERRORE] Node.js non trovato. Installa Node 20:${NC}"
-    echo "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
-    echo "  sudo apt install -y nodejs"
-    exit 1
-fi
+echo "=== Simulatore Bollette Luce — modalita: $MODE ==="
 
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}[ERRORE] Docker non trovato. Installa Docker:${NC}"
-    echo "  sudo apt install docker.io"
-    exit 1
-fi
+if [ "$MODE" = "docker" ]; then
+  richiedi docker "24" "Installa Docker Engine"
+  if [ ! -f "$ROOT/docker/.env" ]; then
+    warn "docker/.env mancante: lo creo da .env.example"
+    cp "$ROOT/docker/.env.example" "$ROOT/docker/.env"
+  fi
+  porta_libera 80   || true
+  porta_libera 8080 || true
 
-echo -e "${GREEN}[OK] Tutti i prerequisiti sono soddisfatti${NC}"
+  echo "[1/2] docker compose up --build -d"
+  (cd "$ROOT/docker" && docker compose up --build -d)
 
-# 1. Avvia PostgreSQL
-echo ""
-echo "[1/4] Avvio PostgreSQL..."
-if docker ps | grep -q simulatore-postgres; then
-    echo -e "${YELLOW}[INFO] PostgreSQL gia in esecuzione${NC}"
-else
+  echo "[2/2] Attesa healthcheck backend..."
+  wait_for "http://localhost:8080/actuator/health" "Backend" 90
+  wait_for "http://localhost/" "Frontend" 30 || true
+
+  echo ""
+  ok "Avviato"
+  echo "  Frontend:    http://localhost"
+  echo "  Backend API: http://localhost:8080"
+  echo "  Swagger UI:  http://localhost:8080/swagger-ui.html"
+
+elif [ "$MODE" = "local" ]; then
+  richiedi java "17" "Installa OpenJDK 17"
+  richiedi node "20" "Installa Node.js 20+"
+  richiedi mvn  "3.9" "Installa Maven"
+  richiedi docker "24" "Serve per PostgreSQL"
+  porta_libera 5432 || true
+  porta_libera 8080 || true
+  porta_libera 5173 || true
+
+  echo "[1/3] PostgreSQL in Docker..."
+  if [ ! -f "$ROOT/docker/.env" ]; then cp "$ROOT/docker/.env.example" "$ROOT/docker/.env"; fi
+  # shellcheck disable=SC1091
+  set -a; . "$ROOT/docker/.env"; set +a
+  if ! docker ps --format '{{.Names}}' | grep -q simulatore-postgres; then
     docker run -d --name simulatore-postgres \
-      -e POSTGRES_DB=simulatore_luce \
-      -e POSTGRES_USER=simulatore \
-      -e POSTGRES_PASSWORD=simulatore123 \
-      -p 5432:5432 \
-      -v postgres_data:/var/lib/postgresql/data \
-      postgres:16-alpine 2>/dev/null
+      -e POSTGRES_DB="$POSTGRES_DB" -e POSTGRES_USER="$POSTGRES_USER" \
+      -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" -p 5432:5432 \
+      postgres:16-alpine >/dev/null || docker start simulatore-postgres
+  fi
+  sleep 5; ok "PostgreSQL avviato"
 
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}[OK] PostgreSQL avviato${NC}"
-    else
-        echo -e "${YELLOW}[WARN] PostgreSQL potrebbe essere gia esistente, provo a startarlo...${NC}"
-        docker start simulatore-postgres 2>/dev/null
-    fi
-fi
+  echo "[2/3] Backend Spring Boot..."
+  export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/${POSTGRES_DB}"
+  export SPRING_DATASOURCE_USERNAME="${POSTGRES_USER}"
+  export SPRING_DATASOURCE_PASSWORD="${POSTGRES_PASSWORD}"
+  (cd "$ROOT/backend" && mvn -q clean package -DskipTests \
+    && nohup java -jar target/*.jar > "$ROOT/backend.log" 2>&1 &)
+  wait_for "http://localhost:8080/actuator/health" "Backend" 90
 
-# 2. Attesa
-echo ""
-echo "[2/4] Attesa avvio PostgreSQL (10 secondi)..."
-for i in {1..10}; do
-    echo -n "."
-    sleep 1
-done
-echo ""
+  echo "[3/3] Frontend dev server..."
+  (cd "$ROOT/frontend" && { [ -d node_modules ] || npm install; } \
+    && nohup npm run dev > "$ROOT/frontend.log" 2>&1 &)
+  wait_for "http://localhost:5173/" "Frontend" 30 || true
 
-# 3. Compila e avvia Backend
-echo ""
-echo "[3/4] Avvio Backend Spring Boot..."
-cd backend
+  echo ""
+  ok "Avviato"
+  echo "  Frontend:    http://localhost:5173"
+  echo "  Backend API: http://localhost:8080"
+  echo "  Log:         backend.log / frontend.log"
 
-if [ ! -f "target/simulatore-bollette-luce-1.0.0.jar" ]; then
-    echo "Compilazione in corso (prima volta, potrebbe richiedere qualche minuto)..."
-    if [ -f "mvnw" ]; then
-        chmod +x mvnw
-        ./mvnw clean package -DskipTests
-    else
-        mvn clean package -DskipTests
-    fi
-fi
-
-if [ -f "target/simulatore-bollette-luce-1.0.0.jar" ]; then
-    nohup java -jar target/simulatore-bollette-luce-1.0.0.jar > ../backend.log 2>&1 &
-    BACKEND_PID=$!
-    echo -e "${GREEN}[OK] Backend avviato (PID: $BACKEND_PID)${NC}"
 else
-    echo -e "${RED}[ERRORE] JAR non trovato. Verifica la compilazione.${NC}"
-    exit 1
+  err "Modalita' non valida: $MODE (usa 'docker' o 'local')"
+  exit 1
 fi
-cd ..
-
-# 4. Avvia Frontend
-echo ""
-echo "[4/4] Avvio Frontend React..."
-cd frontend
-
-if [ ! -d "node_modules" ]; then
-    echo "Installazione dipendenze npm..."
-    npm install
-fi
-
-nohup npm run dev > ../frontend.log 2>&1 &
-FRONTEND_PID=$!
-echo -e "${GREEN}[OK] Frontend avviato (PID: $FRONTEND_PID)${NC}"
-cd ..
-
-# Riepilogo
-echo ""
-echo "=========================================="
-echo -e "${GREEN}  TUTTO AVVIATO CON SUCCESSO!${NC}"
-echo "=========================================="
-echo ""
-echo "  Frontend:     http://localhost:5173"
-echo "  Backend API:  http://localhost:8080"
-echo "  Swagger UI:   http://localhost:8080/swagger-ui.html"
-echo "  PostgreSQL:   localhost:5432"
-echo ""
-echo "  Log backend:  tail -f backend.log"
-echo "  Log frontend: tail -f frontend.log"
-echo ""
-echo "  Per fermare tutto:"
-echo "    ./ferma.sh"
-echo ""
