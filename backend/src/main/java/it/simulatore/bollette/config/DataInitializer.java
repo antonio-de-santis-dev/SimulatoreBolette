@@ -42,84 +42,114 @@ public class DataInitializer {
             return;
         }
 
-        // "Modello Excel" — replica esatta del foglio, per far quadrare i test
-        repo.save(ParametriGestore.builder()
+        // "Modello Excel" — replica il foglio, per i test di regressione (tutti i flag su compatibilita)
+        ParametriGestore excel = ParametriGestore.builder()
                 .nomeProfilo("Modello Excel")
-                .descrizione("Replica esatta del foglio SIMULATORE_BIMESTRALE_LUCE (perdite 10% tondo)")
-                .predefinito(false)
-                .nomeGestore("Gestore Demo")
-                .validoDal(LocalDate.of(2024, 11, 1))
-                .livelloTensioneDefault(LivelloTensione.BT)
-                .percentualePerdite(new BigDecimal("0.10"))
-                .arrotondaPerdite(true)
-                .trasportoKwMese(new BigDecimal("1.866567"))
-                .trasportoPodMese(new BigDecimal("1.84"))
-                .trasportoKwh(new BigDecimal("0.0122"))
-                .asosQuotaFissa(new BigDecimal("7.6302"))
-                .asosQuotaVariabile(new BigDecimal("0.029809"))
-                .arimQuotaVariabile(new BigDecimal("0.008828"))
-                .accisaDomestico(new BigDecimal("0.0227"))
-                .accisaNonDomestico(new BigDecimal("0.0227"))
-                .applicaSogliaEsenzione(false)
-                .sogliaEsenzioneKwhAnno(new BigDecimal("1800"))
-                .sogliaMassimaKwhAnno(new BigDecimal("2640"))
-                .ivaDomestico(new BigDecimal("0.10"))
-                .ivaNonDomestico(new BigDecimal("0.22"))
-                .usaAliquotaIvaBolletta(true)
-                .altrePartiteInImponibile(true)
-                .corrMercatoCapacita(new BigDecimal("0.008995"))
-                .corrDisRtn(new BigDecimal("0.000558"))
-                .corrInt(new BigDecimal("0.000856"))
-                .corrMsd(new BigDecimal("0.001953"))
-                .corrUesSicurezza(new BigDecimal("0.004339"))
-                .corrSal(new BigDecimal("0.00052"))
-                .corrSbilanciamento(new BigDecimal("0.004"))
-                .corrAggregazioneMisure(new BigDecimal("0.007"))
-                .dispbt(new BigDecimal("0.109858"))
-                .corrGestioneCapacita(new BigDecimal("0.01293"))
-                .commercializzazioneMese(new BigDecimal("8.95"))
-                .pcvVariabile(new BigDecimal("0.0044"))
+                .descrizione("Replica il foglio SIMULATORE_BIMESTRALE_LUCE (flag di compatibilita attivi)")
+                .predefinito(false).nomeGestore("Gestore Demo")
+                .validoDal(LocalDate.of(2024, 11, 1)).riferimentoDelibera("Foglio Excel")
+                .applicaEsenzioneAccisaResidenti(false).applicaScaglioni(false)
+                .arrotondaPerdite(true).quotaFissaSoloNonResidenti(false)
+                .altrePartiteInImponibile(true).supportaAliquoteMiste(false).usaAliquotaIvaBolletta(true)
+                .livelloTensioneDefault(LivelloTensione.BT).percentualePerdite(new BigDecimal("0.10"))
+                .trasportoQuotaFissaAnnua(new BigDecimal("22.08"))          // 1,84 x 12
+                .trasportoQuotaPotenzaAnnua(new BigDecimal("22.398804"))     // 1,866567 x 12
+                .quotaPotenzaSoloNonDomestici(false)
+                .asosQuotaFissaAnnua(new BigDecimal("91.5624"))             // 7,6302 x 12
+                .arimQuotaFissaAnnua(BigDecimal.ZERO)
+                .accisaDomestico(new BigDecimal("0.0227")).accisaNonDomestico(new BigDecimal("0.0227"))
+                .sogliaEsenzioneKwhMese(new BigDecimal("150")).potenzaMaxEsenzioneKw(new BigDecimal("3"))
+                .sogliaErosioneKwhMese1_5(new BigDecimal("150")).sogliaErosioneKwhMese3(new BigDecimal("220"))
+                .ivaDomestico(new BigDecimal("0.10")).ivaNonDomestico(new BigDecimal("0.22"))
+                .corrMercatoCapacita(new BigDecimal("0.008995")).corrDisRtn(new BigDecimal("0.000558"))
+                .corrInt(new BigDecimal("0.000856")).corrMsd(new BigDecimal("0.001953"))
+                .corrUesSicurezza(new BigDecimal("0.004339")).corrSal(new BigDecimal("0.00052"))
+                .corrSbilanciamento(new BigDecimal("0.004")).corrAggregazioneMisure(new BigDecimal("0.007"))
+                .dispbt(new BigDecimal("0.109858")).corrGestioneCapacita(new BigDecimal("0.01293"))
+                .commercializzazioneMese(new BigDecimal("8.95")).pcvVariabile(new BigDecimal("0.0044"))
                 .spreadEnergia(new BigDecimal("0.01"))
-                .build());
+                .build();
+        scaglioneUnico(excel, "TRASPORTO_ENERGIA", "0.0122");
+        scaglioneUnico(excel, "ASOS_VARIABILE", "0.029809");
+        scaglioneUnico(excel, "ARIM_VARIABILE", "0.008828");
+        repo.save(excel);
 
-        // "Standard ARERA 2026" — profilo predefinito, valori della fattura reale (perdite BT 10,40%)
-        repo.save(ParametriGestore.builder()
-                .nomeProfilo("Standard ARERA 2026")
-                .descrizione("Parametri nazionali correnti, perdite bassa tensione 10,40% (fattura reale)")
-                .predefinito(true)
-                .nomeGestore("Gestore Demo")
-                .validoDal(LocalDate.of(2026, 1, 1))
-                .livelloTensioneDefault(LivelloTensione.BT)
-                .percentualePerdite(new BigDecimal("0.1040"))
-                .arrotondaPerdite(true)
-                .trasportoKwMese(new BigDecimal("1.866567"))
-                .trasportoPodMese(new BigDecimal("1.84"))
-                .trasportoKwh(new BigDecimal("0.0122"))
-                .asosQuotaFissa(new BigDecimal("7.6302"))
-                .asosQuotaVariabile(new BigDecimal("0.029809"))
-                .arimQuotaVariabile(new BigDecimal("0.008828"))
-                .accisaDomestico(new BigDecimal("0.0227"))
-                .accisaNonDomestico(new BigDecimal("0.0227"))
-                .applicaSogliaEsenzione(false)
-                .sogliaEsenzioneKwhAnno(new BigDecimal("1800"))
-                .sogliaMassimaKwhAnno(new BigDecimal("2640"))
-                .ivaDomestico(new BigDecimal("0.10"))
-                .ivaNonDomestico(new BigDecimal("0.22"))
-                .usaAliquotaIvaBolletta(true)
-                .altrePartiteInImponibile(true)
-                .corrMercatoCapacita(new BigDecimal("0.009001"))
-                .corrDisRtn(new BigDecimal("0.000558"))
-                .corrInt(new BigDecimal("0.000856"))
-                .corrMsd(new BigDecimal("0.001953"))
-                .corrUesSicurezza(new BigDecimal("0.002048"))
-                .corrSal(new BigDecimal("0.00052"))
-                .corrSbilanciamento(new BigDecimal("0.01"))
-                .corrAggregazioneMisure(new BigDecimal("0.007"))
-                .dispbt(new BigDecimal("0.109858"))
-                .corrGestioneCapacita(new BigDecimal("0.01293"))
-                .commercializzazioneMese(new BigDecimal("8.95"))
-                .pcvVariabile(new BigDecimal("0.005"))
+        // "ARERA 2026 — conforme" — predefinito, tutti i flag su normativa
+        ParametriGestore arera = ParametriGestore.builder()
+                .nomeProfilo("ARERA 2026 - conforme")
+                .descrizione("Normativa ARERA vigente: esenzione accisa residenti, scaglioni, perdite BT 10,40%")
+                .predefinito(true).nomeGestore("Gestore Demo")
+                .validoDal(LocalDate.of(2026, 1, 1)).riferimentoDelibera("ARERA 604/2024/R/eel")
+                .applicaEsenzioneAccisaResidenti(true).applicaScaglioni(true)
+                .arrotondaPerdite(false).quotaFissaSoloNonResidenti(true)
+                .altrePartiteInImponibile(true).supportaAliquoteMiste(true).usaAliquotaIvaBolletta(true)
+                .livelloTensioneDefault(LivelloTensione.BT).percentualePerdite(new BigDecimal("0.1040"))
+                .trasportoQuotaFissaAnnua(new BigDecimal("22.08"))
+                .trasportoQuotaPotenzaAnnua(new BigDecimal("22.398804"))
+                .quotaPotenzaSoloNonDomestici(true)
+                .asosQuotaFissaAnnua(new BigDecimal("91.5624")).arimQuotaFissaAnnua(new BigDecimal("3.8568"))
+                .accisaDomestico(new BigDecimal("0.0227")).accisaNonDomestico(new BigDecimal("0.0227"))
+                .sogliaEsenzioneKwhMese(new BigDecimal("150")).potenzaMaxEsenzioneKw(new BigDecimal("3"))
+                .sogliaErosioneKwhMese1_5(new BigDecimal("150")).sogliaErosioneKwhMese3(new BigDecimal("220"))
+                .ivaDomestico(new BigDecimal("0.10")).ivaNonDomestico(new BigDecimal("0.22"))
+                .corrMercatoCapacita(new BigDecimal("0.009001")).corrDisRtn(new BigDecimal("0.000558"))
+                .corrInt(new BigDecimal("0.000856")).corrMsd(new BigDecimal("0.001953"))
+                .corrUesSicurezza(new BigDecimal("0.002048")).corrSal(new BigDecimal("0.00052"))
+                .corrSbilanciamento(new BigDecimal("0.01")).corrAggregazioneMisure(new BigDecimal("0.007"))
+                .dispbt(new BigDecimal("0.109858")).corrGestioneCapacita(new BigDecimal("0.01293"))
+                .commercializzazioneMese(new BigDecimal("8.95")).pcvVariabile(new BigDecimal("0.005"))
                 .spreadEnergia(new BigDecimal("0.01"))
+                .build();
+        // Scaglioni: valori del foglio DATI (7,6302 · 6,7709 · 0,3214 · 1,2554) — attribuzione INFERITA,
+        // da confermare con la delibera vigente (vedi README).
+        scaglione(arera, "TRASPORTO_ENERGIA", "0", "1800", "0.0122", 1);
+        scaglione(arera, "TRASPORTO_ENERGIA", "1800", null, "0.0140", 2);
+        scaglioneUnico(arera, "ASOS_VARIABILE", "0.029809");
+        scaglioneUnico(arera, "ARIM_VARIABILE", "0.008828");
+        repo.save(arera);
+
+        // "FuturEnergy — da fattura" — valori estratti dalla fattura reale
+        ParametriGestore futur = ParametriGestore.builder()
+                .nomeProfilo("FuturEnergy - da fattura")
+                .descrizione("Valori estratti dalla fattura reale FuturEnergy n. 1237600")
+                .predefinito(false).nomeGestore("FuturEnergy Rinnovabile")
+                .validoDal(LocalDate.of(2024, 7, 1)).riferimentoDelibera("Fattura 1237600")
+                .applicaEsenzioneAccisaResidenti(true).applicaScaglioni(false)
+                .arrotondaPerdite(false).quotaFissaSoloNonResidenti(true)
+                .altrePartiteInImponibile(true).supportaAliquoteMiste(true).usaAliquotaIvaBolletta(true)
+                .livelloTensioneDefault(LivelloTensione.BT).percentualePerdite(new BigDecimal("0.1040"))
+                .trasportoQuotaFissaAnnua(new BigDecimal("22.08"))
+                .trasportoQuotaPotenzaAnnua(new BigDecimal("22.398804"))
+                .quotaPotenzaSoloNonDomestici(true)
+                .asosQuotaFissaAnnua(new BigDecimal("91.5624")).arimQuotaFissaAnnua(new BigDecimal("3.8568"))
+                .accisaDomestico(new BigDecimal("0.0227")).accisaNonDomestico(new BigDecimal("0.0227"))
+                .sogliaEsenzioneKwhMese(new BigDecimal("150")).potenzaMaxEsenzioneKw(new BigDecimal("3"))
+                .sogliaErosioneKwhMese1_5(new BigDecimal("150")).sogliaErosioneKwhMese3(new BigDecimal("220"))
+                .ivaDomestico(new BigDecimal("0.10")).ivaNonDomestico(new BigDecimal("0.22"))
+                .corrMercatoCapacita(new BigDecimal("0.009001")).corrDisRtn(new BigDecimal("0.000558"))
+                .corrInt(new BigDecimal("0.000856")).corrMsd(new BigDecimal("0.001953"))
+                .corrUesSicurezza(new BigDecimal("0.002048")).corrSal(new BigDecimal("0.00052"))
+                .corrSbilanciamento(new BigDecimal("0.01")).corrAggregazioneMisure(new BigDecimal("0.007"))
+                .dispbt(new BigDecimal("0.109858")).corrGestioneCapacita(new BigDecimal("0.01293"))
+                .commercializzazioneMese(new BigDecimal("8.95")).pcvVariabile(new BigDecimal("0.005"))
+                .spreadEnergia(new BigDecimal("0.01"))
+                .build();
+        scaglioneUnico(futur, "TRASPORTO_ENERGIA", "0.0122");
+        scaglioneUnico(futur, "ASOS_VARIABILE", "0.029809");
+        scaglioneUnico(futur, "ARIM_VARIABILE", "0.008828");
+        repo.save(futur);
+    }
+
+    private void scaglioneUnico(ParametriGestore p, String componente, String valore) {
+        scaglione(p, componente, "0", null, valore, 1);
+    }
+
+    private void scaglione(ParametriGestore p, String componente, String da, String a, String valore, int ordine) {
+        p.getScaglioni().add(ScaglioneConsumo.builder()
+                .parametri(p).componente(componente)
+                .limiteInferiore(new BigDecimal(da))
+                .limiteSuperiore(a == null ? null : new BigDecimal(a))
+                .valore(new BigDecimal(valore)).unitaMisura("EUR/kWh").ordine(ordine)
                 .build());
     }
 

@@ -88,7 +88,7 @@ public class ConfrontoService {
         // 1. Calcolo con i corrispettivi del gestore, sui kWh della bolletta concorrente
         List<RisultatoMese> risultati = new ArrayList<>();
         for (MeseBolletta mese : bolletta.getMesi()) {
-            risultati.add(motore.calcolaMese(mese, potenza, offerta, parametri));
+            risultati.add(motore.calcolaMese(mese, potenza, offerta, parametri, bolletta.getTipologiaCliente()));
         }
 
         Map<CategoriaVoce, BigDecimal> totali = sommaPerCategoria(risultati);

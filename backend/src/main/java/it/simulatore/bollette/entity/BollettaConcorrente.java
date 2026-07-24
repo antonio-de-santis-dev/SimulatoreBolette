@@ -124,6 +124,15 @@ public class BollettaConcorrente {
         return imponibileOk && totaleOk;
     }
 
+    /** EUR/kWh medio lordo (totale fatturato / kWh netti) — indicatore di confronto sintetico. */
+    public BigDecimal getPrezzoMedioLordoKwh() {
+        BigDecimal kwh = getConsumoTotaleNetto();
+        if (fatturatoTotale == null || kwh.compareTo(BigDecimal.ZERO) == 0) {
+            return null;
+        }
+        return fatturatoTotale.divide(kwh, 6, java.math.RoundingMode.HALF_UP);
+    }
+
     private static BigDecimal nz(BigDecimal v) {
         return v != null ? v : BigDecimal.ZERO;
     }

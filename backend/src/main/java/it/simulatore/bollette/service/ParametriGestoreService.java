@@ -5,6 +5,7 @@ import it.simulatore.bollette.calculation.RisultatoBolletta;
 import it.simulatore.bollette.calculation.RisultatoMese;
 import it.simulatore.bollette.entity.MeseBolletta;
 import it.simulatore.bollette.entity.ParametriGestore;
+import it.simulatore.bollette.entity.ScaglioneConsumo;
 import it.simulatore.bollette.exception.ResourceNotFoundException;
 import it.simulatore.bollette.repository.ParametriGestoreRepository;
 import lombok.RequiredArgsConstructor;
@@ -82,6 +83,7 @@ public class ParametriGestoreService {
     }
 
     /** Anteprima: simula la bolletta su un consumo campione usando solo i parametri del gestore. */
+    @Transactional(readOnly = true)
     public RisultatoBolletta anteprima(Long id) {
         ParametriGestore p = findById(id);
         MeseBolletta campione = MeseBolletta.builder()
@@ -90,7 +92,8 @@ public class ParametriGestoreService {
                 .consumoF2(new BigDecimal("37"))
                 .consumoF3(new BigDecimal("33"))
                 .build();
-        RisultatoMese rm = motore.calcolaMese(campione, new BigDecimal("3"), null, p);
+        RisultatoMese rm = motore.calcolaMese(campione, new BigDecimal("3"), null, p,
+                it.simulatore.bollette.enums.TipoCliente.DOMESTICO_RESIDENTE);
         BigDecimal aliquota = p.getIvaDomestico() != null ? p.getIvaDomestico() : new BigDecimal("0.10");
         return motore.aggregaBolletta(List.of(rm), null, null, aliquota);
     }
@@ -112,23 +115,31 @@ public class ParametriGestoreService {
     }
 
     private ParametriGestore clona(ParametriGestore s) {
-        return ParametriGestore.builder()
+        ParametriGestore copia = ParametriGestore.builder()
                 .nomeProfilo(s.getNomeProfilo()).descrizione(s.getDescrizione())
                 .predefinito(false).nomeGestore(s.getNomeGestore())
                 .validoDal(s.getValidoDal()).validoAl(s.getValidoAl())
-                .livelloTensioneDefault(s.getLivelloTensioneDefault())
-                .percentualePerdite(s.getPercentualePerdite()).arrotondaPerdite(s.getArrotondaPerdite())
-                .trasportoKwMese(s.getTrasportoKwMese()).trasportoPodMese(s.getTrasportoPodMese())
-                .trasportoKwh(s.getTrasportoKwh())
-                .asosQuotaFissa(s.getAsosQuotaFissa()).asosQuotaVariabile(s.getAsosQuotaVariabile())
-                .arimQuotaVariabile(s.getArimQuotaVariabile())
-                .accisaDomestico(s.getAccisaDomestico()).accisaNonDomestico(s.getAccisaNonDomestico())
-                .applicaSogliaEsenzione(s.getApplicaSogliaEsenzione())
-                .sogliaEsenzioneKwhAnno(s.getSogliaEsenzioneKwhAnno())
-                .sogliaMassimaKwhAnno(s.getSogliaMassimaKwhAnno())
-                .ivaDomestico(s.getIvaDomestico()).ivaNonDomestico(s.getIvaNonDomestico())
-                .usaAliquotaIvaBolletta(s.getUsaAliquotaIvaBolletta())
+                .riferimentoDelibera(s.getRiferimentoDelibera())
+                .applicaEsenzioneAccisaResidenti(s.getApplicaEsenzioneAccisaResidenti())
+                .applicaScaglioni(s.getApplicaScaglioni())
+                .arrotondaPerdite(s.getArrotondaPerdite())
+                .quotaFissaSoloNonResidenti(s.getQuotaFissaSoloNonResidenti())
                 .altrePartiteInImponibile(s.getAltrePartiteInImponibile())
+                .supportaAliquoteMiste(s.getSupportaAliquoteMiste())
+                .usaAliquotaIvaBolletta(s.getUsaAliquotaIvaBolletta())
+                .livelloTensioneDefault(s.getLivelloTensioneDefault())
+                .percentualePerdite(s.getPercentualePerdite())
+                .trasportoQuotaFissaAnnua(s.getTrasportoQuotaFissaAnnua())
+                .trasportoQuotaPotenzaAnnua(s.getTrasportoQuotaPotenzaAnnua())
+                .quotaPotenzaSoloNonDomestici(s.getQuotaPotenzaSoloNonDomestici())
+                .asosQuotaFissaAnnua(s.getAsosQuotaFissaAnnua())
+                .arimQuotaFissaAnnua(s.getArimQuotaFissaAnnua())
+                .accisaDomestico(s.getAccisaDomestico()).accisaNonDomestico(s.getAccisaNonDomestico())
+                .sogliaEsenzioneKwhMese(s.getSogliaEsenzioneKwhMese())
+                .potenzaMaxEsenzioneKw(s.getPotenzaMaxEsenzioneKw())
+                .sogliaErosioneKwhMese1_5(s.getSogliaErosioneKwhMese1_5())
+                .sogliaErosioneKwhMese3(s.getSogliaErosioneKwhMese3())
+                .ivaDomestico(s.getIvaDomestico()).ivaNonDomestico(s.getIvaNonDomestico())
                 .corrMercatoCapacita(s.getCorrMercatoCapacita()).corrDisRtn(s.getCorrDisRtn())
                 .corrInt(s.getCorrInt()).corrMsd(s.getCorrMsd()).corrUesSicurezza(s.getCorrUesSicurezza())
                 .corrSal(s.getCorrSal()).corrSbilanciamento(s.getCorrSbilanciamento())
@@ -137,5 +148,16 @@ public class ParametriGestoreService {
                 .commercializzazioneMese(s.getCommercializzazioneMese())
                 .pcvVariabile(s.getPcvVariabile()).spreadEnergia(s.getSpreadEnergia())
                 .build();
+        // copia gli scaglioni
+        if (s.getScaglioni() != null) {
+            for (ScaglioneConsumo sc : s.getScaglioni()) {
+                copia.getScaglioni().add(ScaglioneConsumo.builder()
+                        .parametri(copia).componente(sc.getComponente()).tipoCliente(sc.getTipoCliente())
+                        .limiteInferiore(sc.getLimiteInferiore()).limiteSuperiore(sc.getLimiteSuperiore())
+                        .valore(sc.getValore()).unitaMisura(sc.getUnitaMisura()).ordine(sc.getOrdine())
+                        .build());
+            }
+        }
+        return copia;
     }
 }

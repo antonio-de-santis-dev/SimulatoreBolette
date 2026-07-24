@@ -68,6 +68,9 @@ public class VoceCorrispettivo {
     @Builder.Default
     private Boolean variabilePerMese = false;
 
+    /** Riferimento normativo della voce (es. "Art. 44 Del. 111/06"). */
+    private String riferimentoNormativo;
+
     /**
      * Mese a cui la voce si applica: null o 0 = tutti i mesi; 1 = solo primo mese; 2 = solo
      * secondo mese. Permette di modellare i corrispettivi che nel foglio Excel differiscono

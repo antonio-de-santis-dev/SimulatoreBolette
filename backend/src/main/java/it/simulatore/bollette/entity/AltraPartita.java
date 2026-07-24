@@ -49,5 +49,9 @@ public class AltraPartita {
     @Builder.Default
     private Boolean soggettaIva = true;
 
+    /** true = onere amministrativo del venditore, non regolato — da evidenziare nel confronto. */
+    @Builder.Default
+    private Boolean onereAmministrativo = false;
+
     private Integer ordine;
 }

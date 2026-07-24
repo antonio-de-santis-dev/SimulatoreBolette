@@ -39,6 +39,9 @@ public class MeseBolletta {
     private Integer mese; // 1-12
     private Integer anno;
 
+    /** Giorni del periodo fatturato: per il ragguaglio della soglia di esenzione accisa. */
+    private Integer giorniPeriodo;
+
     // --- I 3 INPUT GIALLI dell'Excel ---
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal consumoF1;
