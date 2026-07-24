@@ -16,10 +16,10 @@ const API_URL = ''
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
 const tipoClienteOptions = [
-  { value: 'RESIDENTE', label: 'Residente (casa principale)' },
-  { value: 'NON_RESIDENTE', label: 'Non residente (seconda casa)' },
+  { value: 'DOMESTICO_RESIDENTE', label: 'Domestico residente (casa principale)' },
+  { value: 'DOMESTICO_NON_RESIDENTE', label: 'Domestico non residente (seconda casa)' },
   { value: 'DOMESTICO_USI_DIVERSI', label: 'Domestico usi diversi' },
-  { value: 'ATTIVITA_PRODUTTIVE', label: 'Attività produttive' },
+  { value: 'ALTRI_USI_BT', label: 'Altri usi in bassa tensione' },
 ]
 
 const potenzaOptions = [
@@ -40,7 +40,7 @@ function Simulatore() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: {
       nome: 'Simulazione ' + new Date().toLocaleDateString('it-IT'),
-      tipoCliente: 'RESIDENTE',
+      tipoCliente: 'DOMESTICO_RESIDENTE',
       potenzaContrattuale: 'KW_3',
       tipoTariffa: 'MONORARIA',
       consumoTotaleKwh: '450',

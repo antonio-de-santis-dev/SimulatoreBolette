@@ -54,7 +54,24 @@ function Confronto() {
             <div className="flex items-center gap-2 text-sm opacity-90"><TrendingDown className="w-5 h-5" /> IL TUO RISPARMIO</div>
             <div className="flex gap-8 mt-2">
               <div><div className="text-3xl font-bold">{eur(ris.risparmioBimestrale)}</div><div className="text-sm opacity-90">bimestrale</div></div>
-              <div><div className="text-3xl font-bold">{eur(ris.risparmioAnnuale)}</div><div className="text-sm opacity-90">annuale (× 6)</div></div>
+              <div>
+                <div className="text-3xl font-bold">{eur(ris.risparmioAnnuale)}</div>
+                <div className="text-sm opacity-90">annuale stimato
+                  {ris.attendibilitaStima && (
+                    <span className={`ml-2 px-2 py-0.5 rounded text-xs font-semibold ${
+                      ris.attendibilitaStima === 'ALTA' ? 'bg-white/30'
+                        : ris.attendibilitaStima === 'MEDIA' ? 'bg-yellow-300 text-yellow-900'
+                        : 'bg-red-200 text-red-800'}`}>{ris.attendibilitaStima}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            {ris.avvertenzaRisparmio && (
+              <p className="mt-3 text-sm bg-black/15 rounded px-3 py-2">⚠️ {ris.avvertenzaRisparmio}</p>
+            )}
+            <div className="mt-3 text-sm opacity-90 flex gap-6">
+              {ris.prezzoMedioLordoConcorrente && <span>€/kWh concorrente: <b>{Number(ris.prezzoMedioLordoConcorrente).toFixed(4)}</b></span>}
+              {ris.prezzoMedioLordoGestore && <span>€/kWh gestore: <b>{Number(ris.prezzoMedioLordoGestore).toFixed(4)}</b></span>}
             </div>
           </section>
 

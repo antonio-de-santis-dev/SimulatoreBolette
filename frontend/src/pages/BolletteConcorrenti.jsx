@@ -14,7 +14,8 @@ const bollettaVuota = () => ({
   numeroFattura: '', dataFattura: '', periodoDal: '', periodoAl: '',
   nomeFornitore: '', nomeOfferta: '', codiceOfferta: '',
   ragioneSociale: '', indirizzoFornitura: '', pod: '',
-  tipologiaCliente: 'NON_RESIDENTE', opzioneTariffaria: '',
+  tipologiaCliente: 'DOMESTICO_NON_RESIDENTE', opzioneTariffaria: '',
+  consumoAnnuoKwh: '',
   potenzaImpegnata: '', potenzaDisponibile: '', livelloTensione: 'BT',
   mesi: [nuovoMese(1), nuovoMese(2)],
   altrePartite: [],
@@ -42,7 +43,7 @@ function BolletteConcorrenti() {
 
   const addPartita = () => setB((p) => ({
     ...p, altrePartite: [...p.altrePartite,
-      { descrizione: '', dal: '', al: '', importo: '', aliquotaIva: '0.10', soggettaIva: true, ordine: p.altrePartite.length + 1 }],
+      { descrizione: '', dal: '', al: '', importo: '', aliquotaIva: '0.10', soggettaIva: true, onereAmministrativo: false, ordine: p.altrePartite.length + 1 }],
   }))
   const setPartita = (i, campo, valore) => setB((p) => {
     const ap = [...p.altrePartite]; ap[i] = { ...ap[i], [campo]: valore }; return { ...p, altrePartite: ap }
@@ -100,13 +101,15 @@ function BolletteConcorrenti() {
           <Campo l="Indirizzo fornitura" v={b.indirizzoFornitura} on={(v) => set('indirizzoFornitura', v)} />
           <Campo l="POD" v={b.pod} on={(v) => set('pod', v)} />
           <Select l="Tipologia cliente" v={b.tipologiaCliente} on={(v) => set('tipologiaCliente', v)}
-            opts={['RESIDENTE', 'NON_RESIDENTE', 'DOMESTICO_USI_DIVERSI', 'ATTIVITA_PRODUTTIVE', 'PMI_RESIDENZIALE']} />
+            opts={['DOMESTICO_RESIDENTE', 'DOMESTICO_NON_RESIDENTE', 'DOMESTICO_USI_DIVERSI', 'ALTRI_USI_BT', 'ILLUMINAZIONE_PUBBLICA']} />
           <Campo l="Opzione tariffaria" v={b.opzioneTariffaria} on={(v) => set('opzioneTariffaria', v)} />
           <Campo l="Potenza impegnata (kW)" t="number" v={b.potenzaImpegnata} on={(v) => set('potenzaImpegnata', v)} />
           <Campo l="Potenza disponibile (kW)" t="number" v={b.potenzaDisponibile} on={(v) => set('potenzaDisponibile', v)} />
           <Select l="Livello tensione" v={b.livelloTensione} on={(v) => set('livelloTensione', v)}
             opts={['BT', 'MT', 'AT_150', 'AT_220', 'AT_370']} />
+          <Campo l="Consumo annuo kWh (se noto)" t="number" v={b.consumoAnnuoKwh} on={(v) => set('consumoAnnuoKwh', v)} />
         </Grid>
+        <p className="text-xs text-gray-500 mt-2">Residente/non residente pilotano l'esenzione accisa e la quota fissa oneri; l'uso domestico pilota l'IVA (10% vs 22%).</p>
       </Sezione>
 
       {/* Sezione 3 — consumi */}
@@ -142,7 +145,7 @@ function BolletteConcorrenti() {
       <Sezione titolo="4. Altre partite">
         <table className="w-full text-sm">
           <thead><tr className="text-left text-gray-500">
-            <th className="pb-2">Descrizione</th><th>Importo</th><th>IVA</th><th>Soggetta</th><th></th>
+            <th className="pb-2">Descrizione</th><th>Importo</th><th>IVA</th><th>Soggetta</th><th>Onere amm.</th><th></th>
           </tr></thead>
           <tbody>
             {b.altrePartite.map((a, i) => (
@@ -151,6 +154,7 @@ function BolletteConcorrenti() {
                 <td className="pr-2"><input className="input w-24" type="number" step="0.01" value={a.importo} onChange={(e) => setPartita(i, 'importo', e.target.value)} /></td>
                 <td className="pr-2"><input className="input w-16" type="number" step="0.01" value={a.aliquotaIva} onChange={(e) => setPartita(i, 'aliquotaIva', e.target.value)} /></td>
                 <td className="pr-2 text-center"><input type="checkbox" checked={a.soggettaIva} onChange={(e) => setPartita(i, 'soggettaIva', e.target.checked)} /></td>
+                <td className="pr-2 text-center"><input type="checkbox" title="Onere amministrativo del venditore" checked={a.onereAmministrativo} onChange={(e) => setPartita(i, 'onereAmministrativo', e.target.checked)} /></td>
                 <td><button onClick={() => delPartita(i)} className="text-red-500"><Trash2 className="w-4 h-4" /></button></td>
               </tr>
             ))}

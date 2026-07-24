@@ -414,6 +414,59 @@ Copertura:
 - `ConfrontoIntegrationTest` — migrazione Flyway + `validate`, seed, unicita del profilo
   predefinito, calcolo del risparmio, anteprima. Gira su H2 in modalita PostgreSQL.
 
+## 12-bis. Conformità normativa ARERA (round 2)
+
+Il programma implementa la **normativa ARERA** come comportamento predefinito e riproduce
+l'Excel solo tramite **flag di compatibilità** (necessari per i test di regressione).
+
+### Flag di conformità (in `ParametriGestore`)
+
+| Flag | Default (normativa) | Compat. Excel | Effetto |
+|---|---|---|---|
+| `applicaEsenzioneAccisaResidenti` | `true` | `false` | esenzione accisa domestici residenti ≤3 kW sui primi 150 kWh/mese |
+| `applicaScaglioni` | `true` | `false` | trasporto energia e oneri variabili a scaglioni di consumo |
+| `arrotondaPerdite` | `false` | `true` | Excel arrotonda i kWh di perdita a intero (distorce i consumi bassi) |
+| `quotaFissaSoloNonResidenti` | `true` | `false` | quota fissa oneri **non** applicata ai residenti |
+| `quotaPotenzaSoloNonDomestici` | `true` | `false` | quota potenza trasporto **mai** ai domestici |
+| `supportaAliquoteMiste` | `true` | `false` | IVA totalizzata per aliquota (10% / 22%) |
+| `percentualePerdite` | `0.1040` (BT) | `0.1000` | coefficiente perdite di rete |
+
+### Regole normative implementate
+
+- **Accisa** (TUA, DLgs 504/95): domestici residenti ≤3 kW esenti sui primi 150 kWh/mese
+  (soglia ragguagliata ai giorni del periodo); non residenti dal primo kWh. Verifica fattura
+  reale: `0,0227 × 17 = 0,39 €` (non residente, dal primo kWh).
+- **Quota fissa oneri**: si applica solo ai non residenti. L'Excel la mette a 7,6302 in un
+  mese e 0 nell'altro dello stesso bimestre — compilazione manuale incoerente, non una regola.
+- **Quota potenza trasporto**: mai ai domestici; valore memorizzato **annuo** e diviso per 12.
+- **Perdite di rete**: si applicano solo a materia energia, dispacciamento e mercato capacità;
+  **non** a trasporto, oneri, accisa (che usano i soli kWh netti). Default senza arrotondamento
+  (scale 6): l'arrotondamento Excel su 2 kWh dà 0 (−100%), su 7 kWh dà 1 (+37%).
+- **Scaglioni** (`ScaglioneConsumo`): struttura assente nell'Excel (la riga "Scag1mese1" e i
+  quattro valori orfani del foglio `DATI` — 7,6302 · 6,7709 · 0,3214 · 1,2554 — suggeriscono
+  che fossero previsti). L'attribuzione dei valori DATI a scaglioni è **inferita** e va
+  confermata con la delibera vigente.
+- **IVA**: 10% uso domestico, 22% non domestico (dipende dall'**uso**, non dalla residenza:
+  un "Domestico non Residente" paga il 10%); supporto ad aliquote miste per riga.
+- **Risparmio annuale**: non un cieco `× 6`. Se è noto il consumo annuo si usa quello
+  (`attendibilitaStima = ALTA`); altrimenti si estrapola declassando l'attendibilità a
+  MEDIA/BASSA quando i mesi sono squilibrati, uno è a zero o il bimestre è sotto i 100 kWh.
+  Nel foglio DICEMBRE-GENNAIO un mese a zero produrrebbe 556,70 €/anno, privo di significato.
+
+### Tre profili di seed
+
+- **"Modello Excel"** — flag su compatibilità: riproduce i tre bimestri (107,974746 · 44,276529 · 59,112642 €).
+- **"ARERA 2026 - conforme"** (predefinito) — flag su normativa, perdite BT 10,40%, scaglioni popolati.
+- **"FuturEnergy - da fattura"** — valori estratti dalla fattura reale n. 1237600.
+
+### Bug noti del file Excel (documentati, non replicati)
+
+`F139` corrotta in tutti i fogli (`=...F69++F80127...+K130`, doppio operatore e riferimenti a
+celle inesistenti/vuote); `F138` include `F136` solo in NOVEMBRE-DICEMBRE; in GENNAIO-FEBBRAIO
+le altre partite (−11,40) non entrano nel totale e le percentuali sommano al 148,9%; `F86`
+punta a `F84` vuota; `F53` azzerata a mano; foglio `DATI` con valori orfani mai referenziati;
+mercato capacità 0,008995 / 0,00093 / 0,01093 tra i fogli (variazione di un ordine di grandezza).
+
 ## 13. Conformita al modello Excel
 
 Allineato: struttura bimestrale a due mesi, motore a righe, perdite `ROUND(,0)` sulla

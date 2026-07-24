@@ -6,31 +6,38 @@ import { Star, Copy, Trash2, Eye, Save } from 'lucide-react'
 // Definizione dei campi per sezione, con badge origine (nazionale/gestore)
 const N = '🏛️', G = '🏢'
 const SEZIONI = [
+  { t: 'Flag di conformità (normativa vs Excel)', campi: [
+    { k: 'applicaEsenzioneAccisaResidenti', l: 'Esenzione accisa residenti ≤3 kW', o: N, tipo: 'bool' },
+    { k: 'applicaScaglioni', l: 'Applica scaglioni di consumo', o: N, tipo: 'bool' },
+    { k: 'arrotondaPerdite', l: 'Arrotonda perdite (compat. Excel)', o: N, tipo: 'bool' },
+    { k: 'quotaFissaSoloNonResidenti', l: 'Quota fissa oneri solo non residenti', o: N, tipo: 'bool' },
+    { k: 'quotaPotenzaSoloNonDomestici', l: 'Quota potenza solo non domestici', o: N, tipo: 'bool' },
+    { k: 'altrePartiteInImponibile', l: 'Altre partite nell\'imponibile', o: N, tipo: 'bool' },
+    { k: 'supportaAliquoteMiste', l: 'Supporta aliquote IVA miste', o: N, tipo: 'bool' },
+    { k: 'usaAliquotaIvaBolletta', l: 'Usa aliquota IVA della bolletta', o: N, tipo: 'bool' },
+  ] },
   { t: 'Perdite di rete', campi: [
-    { k: 'percentualePerdite', l: 'Percentuale perdite', o: N, ph: '0.1040' },
-    { k: 'arrotondaPerdite', l: 'Arrotonda perdite (Excel)', o: N, tipo: 'bool' },
+    { k: 'percentualePerdite', l: 'Percentuale perdite (BT 0,1040)', o: N, ph: '0.1040' },
   ] },
-  { t: 'Trasporto', campi: [
-    { k: 'trasportoKwMese', l: 'EUR/kW/mese', o: N, ph: '1.866567' },
-    { k: 'trasportoPodMese', l: 'EUR/pod/mese', o: N, ph: '1.84' },
-    { k: 'trasportoKwh', l: 'EUR/kWh scaglione 1', o: N, ph: '0.0122' },
+  { t: 'Trasporto (valori ANNUI, /12 nel calcolo)', campi: [
+    { k: 'trasportoQuotaFissaAnnua', l: 'Quota fissa annua', o: N, ph: '22.08' },
+    { k: 'trasportoQuotaPotenzaAnnua', l: 'Quota potenza annua', o: N, ph: '22.398804' },
   ] },
-  { t: 'Oneri di sistema', campi: [
-    { k: 'asosQuotaFissa', l: 'Asos quota fissa', o: N, ph: '7.6302' },
-    { k: 'asosQuotaVariabile', l: 'Asos quota variabile', o: N, ph: '0.029809' },
-    { k: 'arimQuotaVariabile', l: 'Arim quota variabile', o: N, ph: '0.008828' },
+  { t: 'Oneri di sistema (quote fisse ANNUE)', campi: [
+    { k: 'asosQuotaFissaAnnua', l: 'ASOS quota fissa annua', o: N, ph: '91.5624' },
+    { k: 'arimQuotaFissaAnnua', l: 'ARIM quota fissa annua', o: N, ph: '3.8568' },
   ] },
-  { t: 'Imposte', campi: [
+  { t: 'Imposte (accisa con esenzione residenti)', campi: [
     { k: 'accisaDomestico', l: 'Accisa domestico', o: N, ph: '0.0227' },
-    { k: 'applicaSogliaEsenzione', l: 'Applica soglia esenzione', o: N, tipo: 'bool' },
-    { k: 'sogliaEsenzioneKwhAnno', l: 'Soglia esenzione kWh/anno', o: N, ph: '1800' },
-    { k: 'sogliaMassimaKwhAnno', l: 'Soglia massima kWh/anno', o: N, ph: '2640' },
+    { k: 'accisaNonDomestico', l: 'Accisa non domestico', o: N, ph: '0.0227' },
+    { k: 'sogliaEsenzioneKwhMese', l: 'Soglia esenzione kWh/mese', o: N, ph: '150' },
+    { k: 'potenzaMaxEsenzioneKw', l: 'Potenza max esenzione kW', o: N, ph: '3' },
+    { k: 'sogliaErosioneKwhMese1_5', l: 'Soglia erosione ≤1,5 kW', o: N, ph: '150' },
+    { k: 'sogliaErosioneKwhMese3', l: 'Soglia erosione 1,5-3 kW', o: N, ph: '220' },
   ] },
   { t: 'IVA', campi: [
     { k: 'ivaDomestico', l: 'IVA domestico', o: N, ph: '0.10' },
     { k: 'ivaNonDomestico', l: 'IVA non domestico', o: N, ph: '0.22' },
-    { k: 'usaAliquotaIvaBolletta', l: 'Usa aliquota della bolletta', o: N, tipo: 'bool' },
-    { k: 'altrePartiteInImponibile', l: 'Altre partite nell\'imponibile', o: N, tipo: 'bool' },
   ] },
   { t: 'Corrispettivi di dispacciamento (base kWh con perdite)', campi: [
     { k: 'corrMercatoCapacita', l: 'Mercato capacità', o: N, ph: '0.009001' },
@@ -85,7 +92,7 @@ function Parametri() {
       <section className="bg-white rounded-xl shadow-sm border p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-gray-800">Profili</h2>
-          <button onClick={() => setSel({ nomeProfilo: 'Nuovo profilo', arrotondaPerdite: true, usaAliquotaIvaBolletta: true, altrePartiteInImponibile: true, applicaSogliaEsenzione: false, livelloTensioneDefault: 'BT' })}
+          <button onClick={() => setSel({ nomeProfilo: 'Nuovo profilo', applicaEsenzioneAccisaResidenti: true, applicaScaglioni: true, arrotondaPerdite: false, quotaFissaSoloNonResidenti: true, quotaPotenzaSoloNonDomestici: true, altrePartiteInImponibile: true, supportaAliquoteMiste: true, usaAliquotaIvaBolletta: true, percentualePerdite: '0.1040', livelloTensioneDefault: 'BT' })}
             className="btn-sec">Nuovo profilo</button>
         </div>
         <ul className="divide-y">
