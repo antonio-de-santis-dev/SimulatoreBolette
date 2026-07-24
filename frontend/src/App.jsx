@@ -1,25 +1,32 @@
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import { ToastProvider } from './components/Toast'
 import Home from './pages/Home'
-import Simulatore from './pages/Simulatore'
+import BolletteConcorrenti from './pages/BolletteConcorrenti'
 import Confronto from './pages/Confronto'
 import Offerte from './pages/Offerte'
+import Parametri from './pages/Parametri'
 import Storico from './pages/Storico'
+import Simulatore from './pages/Simulatore'
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="container mx-auto px-4 py-8">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/simulatore" element={<Simulatore />} />
-          <Route path="/confronto" element={<Confronto />} />
-          <Route path="/offerte" element={<Offerte />} />
-          <Route path="/storico" element={<Storico />} />
-        </Routes>
-      </main>
-    </div>
+    <ToastProvider>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/bollette" element={<BolletteConcorrenti />} />
+            <Route path="/confronto" element={<Confronto />} />
+            <Route path="/offerte" element={<Offerte />} />
+            <Route path="/parametri" element={<Parametri />} />
+            <Route path="/storico" element={<Storico />} />
+            <Route path="/simulatore" element={<Simulatore />} />
+          </Routes>
+        </main>
+      </div>
+    </ToastProvider>
   )
 }
 

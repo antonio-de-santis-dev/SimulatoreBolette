@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import client from '../api/client'
 import { Calendar, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL = 'http://localhost:8080/api'
+const axios = client
+const API_URL = ''
 
 function Storico() {
   const [simulazioni, setSimulazioni] = useState([])

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import axios from 'axios'
+import client from '../api/client'
 import { 
   Zap, Home, Battery, Euro, PieChart, TrendingUp, 
   ChevronDown, ChevronUp 
@@ -10,7 +10,8 @@ import {
   Tooltip as ReTooltip
 } from 'recharts'
 
-const API_URL = 'http://localhost:8080/api'
+const axios = client
+const API_URL = ''
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 

@@ -1,14 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Zap, BarChart3, History, List, Calculator } from 'lucide-react'
+import { Zap, BarChart3, History, List, FileText, SlidersHorizontal } from 'lucide-react'
 
 function Navbar() {
   const location = useLocation()
 
   const navItems = [
     { path: '/', label: 'Home', icon: Zap },
-    { path: '/simulatore', label: 'Simulatore', icon: Calculator },
+    { path: '/bollette', label: 'Bollette', icon: FileText },
     { path: '/confronto', label: 'Confronto', icon: BarChart3 },
     { path: '/offerte', label: 'Offerte', icon: List },
+    { path: '/parametri', label: 'Parametri', icon: SlidersHorizontal },
     { path: '/storico', label: 'Storico', icon: History },
   ]
 
