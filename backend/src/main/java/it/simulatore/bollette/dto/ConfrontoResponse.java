@@ -39,6 +39,12 @@ public class ConfrontoResponse {
     // Risparmio
     private BigDecimal risparmioBimestrale;
     private BigDecimal risparmioAnnuale;
+    private String attendibilitaStima;   // ALTA / MEDIA / BASSA
+    private String avvertenzaRisparmio;
+
+    // Indicatori sintetici
+    private BigDecimal prezzoMedioLordoConcorrente;  // EUR/kWh
+    private BigDecimal prezzoMedioLordoGestore;       // EUR/kWh
 
     // Dettaglio riga per riga dei mesi (replica visiva dell'Excel)
     private List<MeseCalcolatoDTO> mesi;

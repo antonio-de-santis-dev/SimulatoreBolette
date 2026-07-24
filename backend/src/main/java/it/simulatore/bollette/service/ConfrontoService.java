@@ -1,5 +1,6 @@
 package it.simulatore.bollette.service;
 
+import it.simulatore.bollette.calculation.AnalisiRisparmio;
 import it.simulatore.bollette.calculation.MotoreCalcolo;
 import it.simulatore.bollette.calculation.RigaCalcolata;
 import it.simulatore.bollette.calculation.RisultatoMese;
@@ -143,8 +144,23 @@ public class ConfrontoService {
         BigDecimal concorrenteTotale = bolletta.getFatturatoTotale() != null
                 ? bolletta.getFatturatoTotale() : BigDecimal.ZERO;
         BigDecimal risparmioBim = concorrenteTotale.subtract(totaleGestore).setScale(2, RoundingMode.HALF_UP);
-        r.setRisparmioBimestrale(risparmioBim);
-        r.setRisparmioAnnuale(risparmioBim.multiply(SEI).setScale(2, RoundingMode.HALF_UP));
+
+        // Stima annuale con indice di attendibilita (non un semplice x6 cieco)
+        List<BigDecimal> consumiMese = bolletta.getMesi().stream()
+                .map(it.simulatore.bollette.entity.MeseBolletta::getTotaleNetto).toList();
+        AnalisiRisparmio.Stima stima = AnalisiRisparmio.calcola(risparmioBim, consumiMese,
+                bolletta.getConsumoTotaleNetto(), bolletta.getConsumoAnnuoKwh());
+        r.setRisparmioBimestrale(stima.risparmioBimestrale());
+        r.setRisparmioAnnuale(stima.risparmioAnnualeStimato());
+        r.setAttendibilitaStima(stima.attendibilita().name());
+        r.setAvvertenzaRisparmio(stima.avvertenza());
+
+        // Indicatori sintetici €/kWh medio lordo
+        r.setPrezzoMedioLordoConcorrente(bolletta.getPrezzoMedioLordoKwh());
+        BigDecimal kwhNetti = bolletta.getConsumoTotaleNetto();
+        if (kwhNetti.compareTo(BigDecimal.ZERO) > 0) {
+            r.setPrezzoMedioLordoGestore(totaleGestore.divide(kwhNetti, 6, RoundingMode.HALF_UP));
+        }
 
         r.setMesi(buildMesi(bolletta, risultati));
         return r;

@@ -87,6 +87,10 @@ public class BollettaConcorrente {
 
     @Column(precision = 6, scale = 4) private BigDecimal aliquotaIvaApplicata;
 
+    /** kWh annui dichiarati in fattura (consumo annuo presunto), se noti: per una stima
+     *  del risparmio piu' affidabile dell'estrapolazione x6. */
+    @Column(precision = 12, scale = 2) private BigDecimal consumoAnnuoKwh;
+
     @Column(length = 1000) private String note;
 
     @CreationTimestamp private LocalDateTime createdAt;

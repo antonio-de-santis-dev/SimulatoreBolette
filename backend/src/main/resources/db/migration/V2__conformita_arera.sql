@@ -24,6 +24,9 @@ ALTER TABLE parametri_gestore ADD COLUMN potenza_max_esenzione_kw    NUMERIC(12,
 ALTER TABLE parametri_gestore ADD COLUMN soglia_erosione_kwh_mese1_5 NUMERIC(12, 2);
 ALTER TABLE parametri_gestore ADD COLUMN soglia_erosione_kwh_mese3   NUMERIC(12, 2);
 
+-- ── bollette_concorrenti: consumo annuo noto (per la stima del risparmio) ────
+ALTER TABLE bollette_concorrenti ADD COLUMN consumo_annuo_kwh NUMERIC(12, 2);
+
 -- ── mesi_bolletta: giorni del periodo ────────────────────────────────────────
 ALTER TABLE mesi_bolletta ADD COLUMN giorni_periodo INTEGER;
 
