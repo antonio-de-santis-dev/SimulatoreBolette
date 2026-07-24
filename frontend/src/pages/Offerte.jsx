@@ -42,9 +42,9 @@ function Offerte() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
         <h1 className="text-3xl font-bold">Gestione Offerte</h1>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary w-full md:w-auto">
           <Plus className="w-5 h-5 inline mr-2" /> Nuova Offerta
         </button>
       </div>
@@ -111,19 +111,19 @@ function Offerte() {
                 <span className="text-gray-500">Tariffa:</span>
                 <span>{o.tipoTariffa}</span>
               </div>
-              {o.prezzoFissoF0 && (
+              {o.prezzoFissoF0 != null && Number(o.prezzoFissoF0) > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Prezzo F0:</span>
                   <span className="font-mono">€{o.prezzoFissoF0}/kWh</span>
                 </div>
               )}
-              {o.spreadPunF0 && (
+              {o.spreadPunF0 != null && Number(o.spreadPunF0) > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Spread PUN:</span>
                   <span className="font-mono">+€{o.spreadPunF0}/kWh</span>
                 </div>
               )}
-              {o.pcvAnnuo && (
+              {o.pcvAnnuo != null && Number(o.pcvAnnuo) > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">PCV:</span>
                   <span className="font-mono">€{o.pcvAnnuo}/anno</span>
