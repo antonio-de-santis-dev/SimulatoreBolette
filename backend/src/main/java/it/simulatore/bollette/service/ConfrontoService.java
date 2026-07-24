@@ -56,6 +56,31 @@ public class ConfrontoService {
         return response;
     }
 
+    /** Confronta una bolletta concorrente contro piu' offerte del gestore. */
+    @Transactional
+    public List<ConfrontoResponse> confrontaMultiplo(Long bollettaId, List<Long> offerteIds, Long parametriId) {
+        List<ConfrontoResponse> risultati = new ArrayList<>();
+        for (Long offertaId : offerteIds) {
+            ConfrontoRequest req = new ConfrontoRequest();
+            req.setBollettaConcorrenteId(bollettaId);
+            req.setOffertaGestoreId(offertaId);
+            req.setParametriGestoreId(parametriId);
+            req.setSalva(false);
+            risultati.add(confronta(req));
+        }
+        risultati.sort((a, b) -> b.getRisparmioAnnuale().compareTo(a.getRisparmioAnnuale()));
+        return risultati;
+    }
+
+    public List<Confronto> storico() {
+        return confrontoRepo.findAllByOrderByCreatedAtDesc();
+    }
+
+    public Confronto getById(Long id) {
+        return confrontoRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Confronto", id));
+    }
+
     /** Calcolo puro (senza persistenza) — usato anche dai test. */
     public ConfrontoResponse esegui(BollettaConcorrente bolletta, Offerta offerta, ParametriGestore parametri) {
         BigDecimal potenza = bolletta.getPotenzaImpegnata();

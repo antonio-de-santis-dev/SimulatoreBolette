@@ -4,6 +4,7 @@ it/simulatore/bollette/entity/ParametroARERA.class
 it/simulatore/bollette/entity/ParametriGestore$ParametriGestoreBuilder.class
 it/simulatore/bollette/entity/MeseBolletta.class
 it/simulatore/bollette/enums/TipoCliente.class
+it/simulatore/bollette/service/BollettaConcorrenteService.class
 it/simulatore/bollette/service/OffertaService.class
 it/simulatore/bollette/entity/Offerta.class
 it/simulatore/bollette/repository/OffertaRepository.class
@@ -35,6 +36,7 @@ it/simulatore/bollette/dto/CategoriaConfrontoDTO.class
 it/simulatore/bollette/entity/Simulazione.class
 it/simulatore/bollette/controller/OffertaController.class
 it/simulatore/bollette/enums/TipoOfferta.class
+it/simulatore/bollette/controller/ConfrontoController.class
 it/simulatore/bollette/mapper/OffertaMapper.class
 it/simulatore/bollette/config/CorsConfig.class
 it/simulatore/bollette/entity/PunMensile$PunMensileBuilder.class
@@ -58,6 +60,7 @@ it/simulatore/bollette/repository/ParametriGestoreRepository.class
 it/simulatore/bollette/dto/OffertaRequest.class
 it/simulatore/bollette/enums/PotenzaContrattuale.class
 it/simulatore/bollette/repository/ParametroARERARepository.class
+it/simulatore/bollette/service/ParametriGestoreService.class
 it/simulatore/bollette/entity/BollettaConcorrente$BollettaConcorrenteBuilder.class
 it/simulatore/bollette/enums/TipoTariffa.class
 it/simulatore/bollette/calculation/BollettaCalculator$RisultatoCalcolo.class
@@ -65,8 +68,10 @@ it/simulatore/bollette/repository/ConfrontoRepository.class
 it/simulatore/bollette/enums/CategoriaVoce.class
 it/simulatore/bollette/dto/OffertaResponse.class
 it/simulatore/bollette/repository/MeseBollettaRepository.class
+it/simulatore/bollette/controller/ParametriGestoreController.class
 it/simulatore/bollette/calculation/ConsumiFasce.class
 it/simulatore/bollette/enums/OrigineParametro.class
+it/simulatore/bollette/controller/BollettaConcorrenteController.class
 it/simulatore/bollette/config/DataInitializer.class
 it/simulatore/bollette/calculation/MotoreCalcolo.class
 it/simulatore/bollette/dto/ConfrontoOffertaDTO.class
