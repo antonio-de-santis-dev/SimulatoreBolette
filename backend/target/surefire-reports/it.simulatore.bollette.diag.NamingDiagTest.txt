@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: it.simulatore.bollette.diag.NamingDiagTest
--------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.31 s -- in it.simulatore.bollette.diag.NamingDiagTest
