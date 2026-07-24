@@ -97,12 +97,12 @@ function Parametri() {
         </div>
         <ul className="divide-y">
           {lista.map((p) => (
-            <li key={p.id} className="flex items-center justify-between py-2">
-              <button onClick={() => setSel(p)} className="text-left flex items-center gap-2">
-                {p.predefinito && <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" />}
-                <b>{p.nomeProfilo}</b> <span className="text-gray-400 text-sm">{p.descrizione}</span>
+            <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+              <button onClick={() => setSel(p)} className="text-left flex items-center gap-2 min-w-0">
+                {p.predefinito && <Star className="w-4 h-4 shrink-0 text-yellow-500 fill-yellow-400" />}
+                <b className="shrink-0">{p.nomeProfilo}</b> <span className="text-gray-400 text-sm truncate">{p.descrizione}</span>
               </button>
-              <span className="flex gap-2 text-gray-500">
+              <span className="flex gap-2 text-gray-500 shrink-0">
                 <button title="Anteprima" onClick={() => vediAnteprima(p.id)}><Eye className="w-4 h-4" /></button>
                 <button title="Duplica" onClick={() => duplica(p.id)}><Copy className="w-4 h-4" /></button>
                 {!p.predefinito && <button title="Predefinito" onClick={() => setPredefinito(p.id)}><Star className="w-4 h-4" /></button>}

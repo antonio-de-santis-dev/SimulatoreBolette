@@ -37,15 +37,15 @@ function Storico() {
       ) : (
         <div className="space-y-4">
           {simulazioni.map(s => (
-            <div key={s.id} className="card flex items-center justify-between hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            <div key={s.id} className="card flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center ${
                   s.tipoTariffa === 'MONORARIA' ? 'bg-energy-blue/10' :
                   s.tipoTariffa === 'BIORARIA' ? 'bg-energy-green/10' : 'bg-energy-orange/10'
                 }`}>
                   <span className="text-lg font-bold text-gray-700">{s.nome?.charAt(0)}</span>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-semibold">{s.nome}</h3>
                   <p className="text-sm text-gray-500">
                     {s.tipoCliente} • {s.potenzaContrattuale?.descrizione} • {s.tipoTariffa?.descrizione}
@@ -55,7 +55,7 @@ function Storico() {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <div className="text-2xl font-bold">€{s.totaleBimestrale?.toFixed(2)}</div>
                 <div className="text-sm text-gray-500">bimestrale</div>
                 <div className="text-sm font-medium">€{s.totaleAnnuale?.toFixed(2)}/anno</div>

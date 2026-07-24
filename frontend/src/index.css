@@ -6,6 +6,23 @@
   body {
     @apply bg-gray-50 text-gray-900;
   }
+  /* Evita lo scroll orizzontale accidentale che "sballa" la vista su telefono */
+  html, body {
+    overflow-x: hidden;
+  }
+}
+
+/* Su mobile i campi con font < 16px fanno zoomare Safari/iOS al focus, facendo
+   saltare il layout. Portiamo il font a 16px solo sotto i 640px: invisibile su
+   desktop, elimina lo zoom automatico sul telefono. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea,
+  .input,
+  .input-field {
+    font-size: 16px;
+  }
 }
 
 @layer components {

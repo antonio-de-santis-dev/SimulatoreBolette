@@ -22,7 +22,7 @@ function Navbar() {
             <span className="text-xl font-bold text-gray-900">SimulaLuce</span>
           </Link>
 
-          <div className="flex gap-1">
+          <div className="flex gap-0.5 sm:gap-1">
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.path
@@ -30,9 +30,10 @@ function Navbar() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive 
-                      ? 'bg-energy-blue text-white' 
+                  title={item.label}
+                  className={`flex items-center gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-energy-blue text-white'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >

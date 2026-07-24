@@ -120,7 +120,7 @@ function BolletteConcorrenti() {
             const perdite = round0(num(m.consumoF1) * COEFF_BT) + round0(num(m.consumoF2) * COEFF_BT) + round0(num(m.consumoF3) * COEFF_BT)
             return (
               <div key={i} className="border rounded-lg p-4 bg-yellow-50/40">
-                <div className="flex gap-2 mb-3">
+                <div className="grid grid-cols-3 gap-2 mb-3">
                   <Campo l="Nome mese" v={m.nomeMese} on={(v) => setMese(i, 'nomeMese', v)} />
                   <Campo l="Mese" t="number" v={m.mese} on={(v) => setMese(i, 'mese', v)} />
                   <Campo l="Anno" t="number" v={m.anno} on={(v) => setMese(i, 'anno', v)} />
@@ -130,7 +130,7 @@ function BolletteConcorrenti() {
                   <CampoGiallo l="F2 kWh" v={m.consumoF2} on={(v) => setMese(i, 'consumoF2', v)} />
                   <CampoGiallo l="F3 kWh" v={m.consumoF3} on={(v) => setMese(i, 'consumoF3', v)} />
                 </div>
-                <div className="mt-3 text-sm text-gray-700 flex gap-4">
+                <div className="mt-3 text-sm text-gray-700 flex flex-wrap gap-x-4 gap-y-1">
                   <span>Netti: <b>{netti}</b></span>
                   <span>Perdite (BT): <b>{perdite}</b></span>
                   <span>Con perdite: <b>{netti + perdite}</b></span>
@@ -143,7 +143,8 @@ function BolletteConcorrenti() {
 
       {/* Sezione 4 — altre partite */}
       <Sezione titolo="4. Altre partite">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[520px]">
           <thead><tr className="text-left text-gray-500">
             <th className="pb-2">Descrizione</th><th>Importo</th><th>IVA</th><th>Soggetta</th><th>Onere amm.</th><th></th>
           </tr></thead>
@@ -160,6 +161,7 @@ function BolletteConcorrenti() {
             ))}
           </tbody>
         </table>
+        </div>
         <div className="flex items-center justify-between mt-2">
           <button onClick={addPartita} className="btn-sec flex items-center gap-1"><Plus className="w-4 h-4" /> Aggiungi riga</button>
           <span className="text-sm">Subtotale: <b>{subtotalePartite.toFixed(2)} €</b></span>
@@ -196,10 +198,10 @@ function BolletteConcorrenti() {
         {lista.length === 0 && <p className="text-gray-500 text-sm">Nessuna bolletta inserita.</p>}
         <ul className="divide-y">
           {lista.map((x) => (
-            <li key={x.id} className="flex items-center justify-between py-2">
-              <span className="flex items-center gap-2"><FileText className="w-4 h-4 text-gray-400" />
-                <b>{x.nomeFornitore}</b> — {x.nomeOfferta} ({x.numeroFattura || 's.n.'}) · {x.fatturatoTotale} €</span>
-              <span className="flex gap-2">
+            <li key={x.id} className="flex items-center justify-between gap-2 py-2">
+              <span className="flex items-center gap-2 min-w-0"><FileText className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="truncate"><b>{x.nomeFornitore}</b> — {x.nomeOfferta} ({x.numeroFattura || 's.n.'}) · {x.fatturatoTotale} €</span></span>
+              <span className="flex gap-2 shrink-0">
                 <button onClick={() => duplica(x.id)} className="text-gray-500"><Copy className="w-4 h-4" /></button>
                 <button onClick={() => elimina(x.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
               </span>
