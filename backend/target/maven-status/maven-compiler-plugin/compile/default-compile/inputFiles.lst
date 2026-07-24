@@ -18,6 +18,7 @@
 /home/user/SimulatoreBolette/backend/src/main/java/it/simulatore/bollette/exception/GlobalExceptionHandler.java
 /home/user/SimulatoreBolette/backend/src/main/java/it/simulatore/bollette/calculation/ConsumiFasce.java
 /home/user/SimulatoreBolette/backend/src/main/java/it/simulatore/bollette/dto/ConfrontoRequest.java
+/home/user/SimulatoreBolette/backend/src/main/java/it/simulatore/bollette/calculation/RisultatoBolletta.java
 /home/user/SimulatoreBolette/backend/src/main/java/it/simulatore/bollette/dto/SimulazioneResponse.java
 /home/user/SimulatoreBolette/backend/src/main/java/it/simulatore/bollette/repository/ConfrontoRepository.java
 /home/user/SimulatoreBolette/backend/src/main/java/it/simulatore/bollette/controller/PunMensileController.java

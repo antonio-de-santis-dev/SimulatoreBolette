@@ -16,6 +16,7 @@ it/simulatore/bollette/controller/PunMensileController.class
 it/simulatore/bollette/service/SimulazioneService.class
 it/simulatore/bollette/entity/BollettaConcorrente.class
 it/simulatore/bollette/entity/AltraPartita.class
+it/simulatore/bollette/calculation/RisultatoBolletta.class
 it/simulatore/bollette/calculation/BollettaCalculator.class
 it/simulatore/bollette/exception/ResourceNotFoundException.class
 it/simulatore/bollette/entity/VoceCorrispettivo.class

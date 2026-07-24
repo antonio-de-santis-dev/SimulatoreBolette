@@ -95,6 +95,46 @@ public class MotoreCalcolo {
                 Boolean.TRUE.equals(parametri.getArrotondaPerdite()));
     }
 
+    /**
+     * Aggrega uno o due mesi in una bolletta completa: somma le categorie, applica le altre
+     * partite (soggette a IVA nell'imponibile, non soggette dopo l'IVA) e calcola l'IVA.
+     * Replica la struttura del "quadro sintetico" del foglio Excel.
+     *
+     * @param altrePartiteSoggette   totale altre partite soggette a IVA (nell'imponibile)
+     * @param altrePartiteNonSoggette totale altre partite non soggette (sommate dopo l'IVA)
+     */
+    public RisultatoBolletta aggregaBolletta(List<RisultatoMese> mesi,
+                                             BigDecimal altrePartiteSoggette,
+                                             BigDecimal altrePartiteNonSoggette,
+                                             BigDecimal aliquotaIva) {
+        Map<CategoriaVoce, BigDecimal> totali = new EnumMap<>(CategoriaVoce.class);
+        for (CategoriaVoce cat : CategoriaVoce.values()) {
+            totali.put(cat, BigDecimal.ZERO);
+        }
+        for (RisultatoMese rm : mesi) {
+            for (CategoriaVoce cat : CategoriaVoce.values()) {
+                totali.merge(cat, rm.getTotale(cat), BigDecimal::add);
+            }
+        }
+
+        BigDecimal soggette = nz(altrePartiteSoggette);
+        BigDecimal nonSoggette = nz(altrePartiteNonSoggette);
+
+        BigDecimal imponibile = totali.get(CategoriaVoce.MATERIA_ENERGIA)
+                .add(totali.get(CategoriaVoce.TRASPORTO))
+                .add(totali.get(CategoriaVoce.ONERI_SISTEMA))
+                .add(totali.get(CategoriaVoce.IMPOSTE))
+                .add(totali.get(CategoriaVoce.ALTRE_PARTITE))
+                .add(soggette)
+                .setScale(6, RoundingMode.HALF_UP);
+
+        BigDecimal iva = imponibile.multiply(nz(aliquotaIva)).setScale(6, RoundingMode.HALF_UP);
+        BigDecimal totale = imponibile.add(iva).add(nonSoggette).setScale(6, RoundingMode.HALF_UP);
+
+        return new RisultatoBolletta(mesi, totali, soggette, nonSoggette,
+                imponibile, nz(aliquotaIva), iva, totale);
+    }
+
     private boolean appartieneAlMese(VoceCorrispettivo v, Integer numeroMese) {
         Integer m = v.getNumeroMese();
         return m == null || m == 0 || m.equals(numeroMese);
