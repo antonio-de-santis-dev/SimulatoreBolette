@@ -1,0 +1,22 @@
+name: Deploy su Fly.io
+
+# Deploy automatico ad ogni push sul branch di lavoro o su main,
+# piu' avvio manuale dalla tab "Actions" di GitHub.
+on:
+  push:
+    branches:
+      - main
+      - claude/simulatore-bollette-refactor-z3yijj
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    concurrency: deploy-group   # evita deploy sovrapposti
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
