@@ -1,6 +1,6 @@
 # Configurazione Fly.io — vedi DEPLOY_FLYIO.md.
-# Rinomina "app" se il nome e' gia' occupato su Fly.
-app = "simulatore-bollette"
+# Il nome deve coincidere con l'app creata su Fly (fly apps list).
+app = "simulatorebolette"
 primary_region = "fra"
 
 [build]
