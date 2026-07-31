@@ -31,6 +31,12 @@ public class DataInitializer {
             seedOfferte(offertaRepo);
             seedParametriGestore(parametriGestoreRepo);
             seedBollettaEsempio(bollettaRepo);
+
+            // prompt 1: collega le offerte ancora orfane al gestore predefinito
+            parametriGestoreRepo.findByPredefinitoTrue().ifPresent(pref ->
+                offertaRepo.findAll().stream()
+                    .filter(o -> o.getGestore() == null)
+                    .forEach(o -> { o.setGestore(pref); offertaRepo.save(o); }));
         };
     }
 

@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * @deprecated In dismissione a favore di {@code /api/gestori} (offerte come
+ * sotto-risorsa del gestore). Mantenuto per retrocompatibilita': Confronto e
+ * Simulatore leggono ancora da {@code /api/offerte}.
+ */
+@Deprecated
 @RestController
 @RequestMapping("/api/offerte")
 @RequiredArgsConstructor

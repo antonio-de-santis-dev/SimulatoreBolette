@@ -14,12 +14,15 @@ public interface OffertaMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "attiva", constant = "true")
+    @Mapping(target = "gestore", ignore = true)
     Offerta toEntity(OffertaRequest request);
 
+    @Mapping(target = "gestoreId", source = "gestore.id")
     OffertaResponse toResponse(Offerta entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "gestore", ignore = true)
     void updateEntity(OffertaRequest request, @MappingTarget Offerta entity);
 }

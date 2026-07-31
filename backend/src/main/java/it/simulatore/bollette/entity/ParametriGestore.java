@@ -110,6 +110,19 @@ public class ParametriGestore {
     @Builder.Default
     private List<ScaglioneConsumo> scaglioni = new ArrayList<>();
 
+    // ═══ OFFERTE DEL GESTORE (prompt 1: relazione uno-a-molti) ═══
+    // orphanRemoval = false: eliminare un gestore non cancella a cascata le offerte;
+    // la disassociazione e' gestita esplicitamente nel GestoreService.
+    // @JsonIgnore: le offerte sono esposte tramite i DTO di /api/gestori, non nella
+    // serializzazione diretta di /api/parametri-gestore (che resta invariata).
+    @OneToMany(mappedBy = "gestore", cascade = CascadeType.ALL, orphanRemoval = false)
+    @OrderBy("nomeOfferta ASC")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @Builder.Default
+    private List<Offerta> offerte = new ArrayList<>();
+
     @CreationTimestamp private LocalDateTime createdAt;
     @UpdateTimestamp private LocalDateTime updatedAt;
 

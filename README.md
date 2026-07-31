@@ -265,7 +265,42 @@ TOTALE:           118,34 €
 | POST | `/api/bollette-concorrenti/{id}/duplica` | clona |
 | GET | `/api/bollette-concorrenti/{id}/quadratura` | verifica somma = totale |
 
-### Parametri gestore
+### Il mio gestore (area unificata — `/api/gestori`)
+
+Area che **unifica Offerte + configurazione commerciale del gestore** (prompt 1).
+Ogni `Offerta` è collegata a un `ParametriGestore` (relazione 1-a-molti) e le
+offerte sono gestite come sotto-risorsa del gestore. I DTO espongono **solo**
+la parte commerciale/anagrafica + i flag di conformità: i **parametri nazionali
+ARERA** (accise, trasporto, oneri, dispacciamento, IVA, perdite) **non**
+compaiono qui — restano in `ParametriGestore` e saranno estratti in un
+intervento successivo (prompt 2).
+
+| Metodo | Endpoint | Descrizione |
+|---|---|---|
+| GET | `/api/gestori` | lista compatta |
+| GET | `/api/gestori/{id}` | dettaglio (anagrafica + config + offerte) |
+| POST | `/api/gestori` | crea |
+| PUT | `/api/gestori/{id}` | aggiorna (parziale o totale) |
+| DELETE | `/api/gestori/{id}` | elimina (scollega le offerte, non le cancella) |
+| POST | `/api/gestori/{id}/predefinito` | imposta predefinito (unico) |
+| POST | `/api/gestori/{id}/duplica` | clona |
+| GET | `/api/gestori/{id}/anteprima` | simula su un consumo campione |
+| GET | `/api/gestori/{id}/offerte` | offerte del gestore |
+| POST | `/api/gestori/{id}/offerte` | aggiungi offerta |
+| PUT | `/api/gestori/{id}/offerte/{offertaId}` | modifica offerta |
+| DELETE | `/api/gestori/{id}/offerte/{offertaId}` | elimina offerta |
+
+Nel **frontend**, la voce di navbar **"Il mio gestore"** (`/gestore`) sostituisce
+le vecchie Offerte e Parametri: lista dei gestori → *Visualizza dettaglio* →
+*Modifica* (parziale o totale) con le offerte come tabella modificabile. Confronto
+e Bollette restano invariati.
+
+### Parametri gestore (`@Deprecated`)
+
+In dismissione a favore di `/api/gestori` per la parte commerciale; resta l'unico
+endpoint per i parametri nazionali finché non saranno estratti (prompt 2).
+`/api/offerte` è ugualmente `@Deprecated` (le scritture delegano al gestore
+predefinito) ma resta funzionante per Confronto e Simulatore.
 
 | Metodo | Endpoint | Descrizione |
 |---|---|---|

@@ -10,7 +10,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** API per la SORGENTE "B": i parametri del gestore (area configurazione). */
+/**
+ * API per la SORGENTE "B": i parametri del gestore (area configurazione).
+ *
+ * @deprecated per la parte commerciale/anagrafica in dismissione a favore di
+ * {@code /api/gestori}. Resta l'unico endpoint per i parametri nazionali ARERA
+ * finche' non saranno estratti (prompt 2); Confronto e Simulatore lo usano.
+ */
+@Deprecated
 @RestController
 @RequestMapping("/api/parametri-gestore")
 @RequiredArgsConstructor

@@ -1,5 +1,6 @@
 package it.simulatore.bollette.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import it.simulatore.bollette.enums.*;
 import jakarta.persistence.*;
@@ -80,7 +81,23 @@ public class Offerta {
     private String condizioniSpeciali;
 
     @Column
+    @Builder.Default
     private Boolean attiva = true;
+
+    /**
+     * Gestore proprietario dell'offerta (prompt 1: relazione molti-a-uno).
+     * Nullable per tollerare offerte orfane durante la transizione; la
+     * cancellazione a cascata NON avviene (orphanRemoval=false lato gestore),
+     * viene gestita esplicitamente nel service.
+     * {@code @JsonIgnore}: la relazione e' esposta tramite i DTO di /api/gestori,
+     * non nella serializzazione diretta dell'entita' (evita ricorsioni).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parametri_gestore_id")
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private ParametriGestore gestore;
 
     /**
      * Voci di corrispettivo dell'offerta (origine OFFERTA): tipicamente le quote energia per

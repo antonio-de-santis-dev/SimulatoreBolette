@@ -22,5 +22,7 @@ public class OffertaResponse {
     private BigDecimal spreadPunF23;
     private BigDecimal pcvAnnuo;
     private Boolean attiva;
+    /** Id del gestore proprietario (null per offerte orfane in transizione). */
+    private Long gestoreId;
     private LocalDateTime createdAt;
 }

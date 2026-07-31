@@ -1,360 +1,349 @@
 import { useEffect, useState } from 'react'
 import client from '../api/client'
 import { useToast } from '../components/Toast'
-import { Plus, Trash2, Star, Copy, Eye, Save, List, SlidersHorizontal } from 'lucide-react'
+import {
+  Building2, Plus, Trash2, Pencil, Star, Copy, Eye, ArrowLeft, Save, X, Info,
+} from 'lucide-react'
 
-/**
- * Area unificata "Il mio gestore": raccoglie in un'unica pagina
- *  - le OFFERTE commerciali del gestore (ex pagina Offerte)
- *  - la CONFIGURAZIONE del gestore / profili parametri (ex pagina Parametri)
- *
- * Il Confronto (comparatore 2 bollette) e l'inserimento Bollette restano
- * pagine separate e invariati. I dati nazionali ARERA (badge 🏛️) restano
- * dentro il profilo per ora: la loro estrazione e' prevista in un intervento
- * successivo.
- */
-function Gestore() {
-  const [tab, setTab] = useState('offerte')
+// Flag di conformita: chiave -> etichetta (sola parte gestore/commerciale)
+const FLAG = [
+  { key: 'applicaEsenzioneAccisaResidenti', label: 'Esenzione accisa residenti' },
+  { key: 'applicaScaglioni', label: 'Applica scaglioni' },
+  { key: 'arrotondaPerdite', label: 'Arrotonda perdite' },
+  { key: 'quotaFissaSoloNonResidenti', label: 'Quota fissa solo non residenti' },
+  { key: 'altrePartiteInImponibile', label: 'Altre partite in imponibile' },
+  { key: 'supportaAliquoteMiste', label: 'Supporta aliquote miste' },
+  { key: 'usaAliquotaIvaBolletta', label: 'Usa aliquota IVA bolletta' },
+]
 
-  return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Il mio gestore</h1>
-        <p className="text-gray-600">
-          Le tue offerte e la configurazione del gestore in un unico posto.
-        </p>
-      </div>
-
-      {/* Selettore vista */}
-      <div className="inline-flex rounded-lg border bg-white p-1 shadow-sm">
-        <button
-          onClick={() => setTab('offerte')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            tab === 'offerte' ? 'bg-energy-blue text-white' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <List className="w-4 h-4" /> Offerte
-        </button>
-        <button
-          onClick={() => setTab('config')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            tab === 'config' ? 'bg-energy-blue text-white' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          <SlidersHorizontal className="w-4 h-4" /> Configurazione
-        </button>
-      </div>
-
-      {tab === 'offerte' ? <SezioneOfferte /> : <SezioneConfigurazione />}
-    </div>
-  )
+const OFFERTA_VUOTA = {
+  nomeFornitore: '', nomeOfferta: '', tipoOfferta: 'PREZZO_FISSO', tipoTariffa: 'MONORARIA',
+  prezzoFissoF0: '', prezzoFissoF1: '', prezzoFissoF23: '', spreadPunF0: '', pcvAnnuo: '',
+  condizioniSpeciali: '',
 }
 
-/* ═══════════════════════ OFFERTE ═══════════════════════ */
-
-function SezioneOfferte() {
+function Gestore() {
   const toast = useToast()
-  const [offerte, setOfferte] = useState([])
-  const [showForm, setShowForm] = useState(false)
-  const vuota = {
-    nomeFornitore: '', nomeOfferta: '', tipoOfferta: 'PREZZO_FISSO',
-    tipoTariffa: 'MONORARIA', prezzoFissoF0: '', spreadPunF0: '', pcvAnnuo: '',
+  const [vista, setVista] = useState('lista') // 'lista' | 'dettaglio'
+  const [gestori, setGestori] = useState([])
+  const [dett, setDett] = useState(null)
+  const [editMode, setEditMode] = useState(false)
+  const [editData, setEditData] = useState(null)
+  const [offertaForm, setOffertaForm] = useState(null)
+
+  useEffect(() => { loadLista() }, [])
+
+  const loadLista = () => client.get('/gestori').then((r) => setGestori(r.data)).catch(toast.error)
+
+  const apri = (id) => client.get(`/gestori/${id}`).then((r) => {
+    setDett(r.data); setEditMode(false); setVista('dettaglio')
+  }).catch(toast.error)
+
+  const tornaLista = () => { setVista('lista'); setDett(null); setEditMode(false); loadLista() }
+
+  const nuovo = () => client.post('/gestori', { nomeProfilo: `Nuovo gestore ${Date.now()}`, nomeGestore: 'Nuovo gestore' })
+    .then((r) => { toast.success('Gestore creato'); apri(r.data.id).then(() => attivaModifica(r.data)) })
+    .catch(toast.error)
+
+  const elimina = (id) => {
+    if (!confirm('Eliminare questo gestore? Le offerte collegate vengono scollegate, non eliminate.')) return
+    client.delete(`/gestori/${id}`).then(() => { toast.info('Gestore eliminato'); tornaLista() }).catch(toast.error)
   }
-  const [formData, setFormData] = useState(vuota)
+  const setPredefinito = (id) => client.post(`/gestori/${id}/predefinito`)
+    .then(() => { toast.success('Impostato come predefinito'); apri(id) }).catch(toast.error)
+  const duplica = (id) => client.post(`/gestori/${id}/duplica`)
+    .then((r) => { toast.success('Gestore duplicato'); apri(r.data.id) }).catch(toast.error)
 
-  const load = () => client.get('/offerte').then((r) => setOfferte(r.data)).catch(toast.error)
-  useEffect(() => { load() }, [])
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    client.post('/offerte', {
-      ...formData,
-      prezzoFissoF0: formData.prezzoFissoF0 || null,
-      spreadPunF0: formData.spreadPunF0 || null,
-      pcvAnnuo: formData.pcvAnnuo || null,
-    }).then(() => {
-      toast.success('Offerta salvata')
-      load()
-      setShowForm(false)
-      setFormData(vuota)
+  // ── modifica gestore ──
+  const attivaModifica = (d = dett) => {
+    setEditData({
+      nomeProfilo: d.nomeProfilo ?? '', nomeGestore: d.nomeGestore ?? '', descrizione: d.descrizione ?? '',
+      commercializzazioneMese: d.commercializzazioneMese ?? '', pcvVariabile: d.pcvVariabile ?? '',
+      spreadEnergia: d.spreadEnergia ?? '',
+      ...FLAG.reduce((a, f) => ({ ...a, [f.key]: !!d[f.key] }), {}),
+    })
+    setEditMode(true)
+  }
+  const annulla = () => { setEditMode(false); setEditData(null) }
+  const salva = () => {
+    const payload = { ...editData }
+    ;['commercializzazioneMese', 'pcvVariabile', 'spreadEnergia'].forEach((k) => {
+      payload[k] = payload[k] === '' ? null : payload[k]
+    })
+    client.put(`/gestori/${dett.id}`, payload).then((r) => {
+      toast.success('Modifiche salvate'); setDett(r.data); setEditMode(false); setEditData(null)
     }).catch(toast.error)
   }
 
-  const deleteOfferta = (id) => {
+  // ── offerte ──
+  const salvaOfferta = (e) => {
+    e.preventDefault()
+    const payload = { ...offertaForm }
+    ;['prezzoFissoF0', 'prezzoFissoF1', 'prezzoFissoF23', 'spreadPunF0', 'pcvAnnuo'].forEach((k) => {
+      payload[k] = payload[k] === '' ? null : payload[k]
+    })
+    const gid = dett.id
+    const req = offertaForm.id
+      ? client.put(`/gestori/${gid}/offerte/${offertaForm.id}`, payload)
+      : client.post(`/gestori/${gid}/offerte`, payload)
+    req.then(() => { toast.success(offertaForm.id ? 'Offerta aggiornata' : 'Offerta aggiunta'); setOffertaForm(null); apri(gid) })
+      .catch(toast.error)
+  }
+  const eliminaOfferta = (offertaId) => {
     if (!confirm('Eliminare questa offerta?')) return
-    client.delete(`/offerte/${id}`).then(() => { toast.info('Offerta eliminata'); load() }).catch(toast.error)
+    client.delete(`/gestori/${dett.id}/offerte/${offertaId}`)
+      .then(() => { toast.info('Offerta eliminata'); apri(dett.id) }).catch(toast.error)
   }
 
-  return (
-    <div>
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">Offerte commerciali</h2>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary w-full md:w-auto">
-          <Plus className="w-5 h-5 inline mr-2" /> Nuova offerta
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="card mb-6 bg-gray-50">
-          <form onSubmit={handleSubmit} className="grid md:grid-cols-3 gap-4">
-            <input placeholder="Fornitore" value={formData.nomeFornitore}
-              onChange={(e) => setFormData({ ...formData, nomeFornitore: e.target.value })}
-              className="input-field" required />
-            <input placeholder="Nome offerta" value={formData.nomeOfferta}
-              onChange={(e) => setFormData({ ...formData, nomeOfferta: e.target.value })}
-              className="input-field" required />
-            <select value={formData.tipoOfferta}
-              onChange={(e) => setFormData({ ...formData, tipoOfferta: e.target.value })}
-              className="input-field">
-              <option value="PREZZO_FISSO">Prezzo fisso</option>
-              <option value="INDICIZZATA_PUN">Indicizzata PUN</option>
-            </select>
-            <select value={formData.tipoTariffa}
-              onChange={(e) => setFormData({ ...formData, tipoTariffa: e.target.value })}
-              className="input-field">
-              <option value="MONORARIA">Monoraria</option>
-              <option value="BIORARIA">Bioraria</option>
-              <option value="TRIORARIA">Trioraria</option>
-            </select>
-            <input placeholder="Prezzo fisso €/kWh" type="number" step="0.0001"
-              value={formData.prezzoFissoF0}
-              onChange={(e) => setFormData({ ...formData, prezzoFissoF0: e.target.value })}
-              className="input-field" />
-            <input placeholder="Spread PUN €/kWh" type="number" step="0.0001"
-              value={formData.spreadPunF0}
-              onChange={(e) => setFormData({ ...formData, spreadPunF0: e.target.value })}
-              className="input-field" />
-            <input placeholder="PCV €/anno" type="number" step="0.01"
-              value={formData.pcvAnnuo}
-              onChange={(e) => setFormData({ ...formData, pcvAnnuo: e.target.value })}
-              className="input-field" />
-            <div className="md:col-span-3">
-              <button type="submit" className="btn-primary">Salva offerta</button>
-            </div>
-          </form>
+  // ═══════════════ LISTA ═══════════════
+  if (vista === 'lista') {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+            <Building2 className="w-8 h-8 text-energy-blue" /> Il mio gestore
+          </h1>
+          <button onClick={nuovo} className="btn-primary w-full md:w-auto">
+            <Plus className="w-5 h-5 inline mr-2" /> Nuovo gestore
+          </button>
         </div>
-      )}
+        <p className="text-gray-600 mb-6">Configurazione del gestore e relative offerte, in un'unica area.</p>
 
-      {offerte.length === 0 ? (
-        <div className="card text-center text-gray-500">Nessuna offerta inserita.</div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {offerte.map((o) => (
-            <div key={o.id} className="card hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-lg">{o.nomeFornitore}</h3>
-                <button onClick={() => deleteOfferta(o.id)} className="text-red-500 hover:text-red-700">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-gray-600 text-sm mb-3">{o.nomeOfferta}</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Tipo:</span>
-                  <span className={`font-medium ${
-                    o.tipoOfferta === 'PREZZO_FISSO' ? 'text-energy-blue' : 'text-energy-green'
-                  }`}>{o.tipoOfferta === 'PREZZO_FISSO' ? 'Prezzo fisso' : 'Indicizzata PUN'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Tariffa:</span>
-                  <span>{o.tipoTariffa}</span>
-                </div>
-                {o.prezzoFissoF0 != null && Number(o.prezzoFissoF0) > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Prezzo F0:</span>
-                    <span className="font-mono">€{o.prezzoFissoF0}/kWh</span>
-                  </div>
-                )}
-                {o.spreadPunF0 != null && Number(o.spreadPunF0) > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Spread PUN:</span>
-                    <span className="font-mono">+€{o.spreadPunF0}/kWh</span>
-                  </div>
-                )}
-                {o.pcvAnnuo != null && Number(o.pcvAnnuo) > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">PCV:</span>
-                    <span className="font-mono">€{o.pcvAnnuo}/anno</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ═══════════════════════ CONFIGURAZIONE (profili parametri) ═══════════════════════ */
-
-const N = '🏛️', G = '🏢'
-const SEZIONI = [
-  { t: 'Flag di conformità (normativa vs Excel)', campi: [
-    { k: 'applicaEsenzioneAccisaResidenti', l: 'Esenzione accisa residenti ≤3 kW', o: N, tipo: 'bool' },
-    { k: 'applicaScaglioni', l: 'Applica scaglioni di consumo', o: N, tipo: 'bool' },
-    { k: 'arrotondaPerdite', l: 'Arrotonda perdite (compat. Excel)', o: N, tipo: 'bool' },
-    { k: 'quotaFissaSoloNonResidenti', l: 'Quota fissa oneri solo non residenti', o: N, tipo: 'bool' },
-    { k: 'quotaPotenzaSoloNonDomestici', l: 'Quota potenza solo non domestici', o: N, tipo: 'bool' },
-    { k: 'altrePartiteInImponibile', l: 'Altre partite nell\'imponibile', o: N, tipo: 'bool' },
-    { k: 'supportaAliquoteMiste', l: 'Supporta aliquote IVA miste', o: N, tipo: 'bool' },
-    { k: 'usaAliquotaIvaBolletta', l: 'Usa aliquota IVA della bolletta', o: N, tipo: 'bool' },
-  ] },
-  { t: 'Perdite di rete', campi: [
-    { k: 'percentualePerdite', l: 'Percentuale perdite (BT 0,1040)', o: N, ph: '0.1040' },
-  ] },
-  { t: 'Trasporto (valori ANNUI, /12 nel calcolo)', campi: [
-    { k: 'trasportoQuotaFissaAnnua', l: 'Quota fissa annua', o: N, ph: '22.08' },
-    { k: 'trasportoQuotaPotenzaAnnua', l: 'Quota potenza annua', o: N, ph: '22.398804' },
-  ] },
-  { t: 'Oneri di sistema (quote fisse ANNUE)', campi: [
-    { k: 'asosQuotaFissaAnnua', l: 'ASOS quota fissa annua', o: N, ph: '91.5624' },
-    { k: 'arimQuotaFissaAnnua', l: 'ARIM quota fissa annua', o: N, ph: '3.8568' },
-  ] },
-  { t: 'Imposte (accisa con esenzione residenti)', campi: [
-    { k: 'accisaDomestico', l: 'Accisa domestico', o: N, ph: '0.0227' },
-    { k: 'accisaNonDomestico', l: 'Accisa non domestico', o: N, ph: '0.0227' },
-    { k: 'sogliaEsenzioneKwhMese', l: 'Soglia esenzione kWh/mese', o: N, ph: '150' },
-    { k: 'potenzaMaxEsenzioneKw', l: 'Potenza max esenzione kW', o: N, ph: '3' },
-    { k: 'sogliaErosioneKwhMese1_5', l: 'Soglia erosione ≤1,5 kW', o: N, ph: '150' },
-    { k: 'sogliaErosioneKwhMese3', l: 'Soglia erosione 1,5-3 kW', o: N, ph: '220' },
-  ] },
-  { t: 'IVA', campi: [
-    { k: 'ivaDomestico', l: 'IVA domestico', o: N, ph: '0.10' },
-    { k: 'ivaNonDomestico', l: 'IVA non domestico', o: N, ph: '0.22' },
-  ] },
-  { t: 'Corrispettivi di dispacciamento (base kWh con perdite)', campi: [
-    { k: 'corrMercatoCapacita', l: 'Mercato capacità', o: N, ph: '0.009001' },
-    { k: 'corrDisRtn', l: 'DIS / RTN', o: N, ph: '0.000558' },
-    { k: 'corrInt', l: 'INT', o: N, ph: '0.000856' },
-    { k: 'corrMsd', l: 'MSD', o: N, ph: '0.001953' },
-    { k: 'corrUesSicurezza', l: 'UES / Sicurezza', o: N, ph: '0.002048' },
-    { k: 'corrSal', l: 'SAL', o: N, ph: '0.00052' },
-    { k: 'corrSbilanciamento', l: 'Sbilanciamento', o: G, ph: '0.01' },
-    { k: 'corrAggregazioneMisure', l: 'Aggregazione misure', o: N, ph: '0.007' },
-    { k: 'dispbt', l: 'DISPBT', o: N, ph: '0.109858' },
-    { k: 'corrGestioneCapacita', l: 'Gestione capacità', o: N, ph: '0.01293' },
-  ] },
-  { t: 'Corrispettivi commerciali del gestore', campi: [
-    { k: 'commercializzazioneMese', l: 'Commercializzazione/mese', o: G, ph: '8.95' },
-    { k: 'pcvVariabile', l: 'PCV variabile', o: G, ph: '0.005' },
-    { k: 'spreadEnergia', l: 'Spread energia', o: G, ph: '0.01' },
-  ] },
-]
-
-function SezioneConfigurazione() {
-  const toast = useToast()
-  const [lista, setLista] = useState([])
-  const [sel, setSel] = useState(null)
-  const [anteprima, setAnteprima] = useState(null)
-
-  const carica = () => client.get('/parametri-gestore').then((r) => setLista(r.data)).catch(toast.error)
-  useEffect(() => { carica() }, [])
-
-  const set = (k, v) => setSel((p) => ({ ...p, [k]: v }))
-
-  const salva = () => {
-    const req = sel.id ? client.put(`/parametri-gestore/${sel.id}`, sel) : client.post('/parametri-gestore', sel)
-    req.then(() => { toast.success('Profilo salvato'); carica() }).catch(toast.error)
-  }
-  const setPredefinito = (id) => client.post(`/parametri-gestore/${id}/predefinito`)
-    .then(() => { toast.success('Profilo predefinito aggiornato'); carica() }).catch(toast.error)
-  const duplica = (id) => client.post(`/parametri-gestore/${id}/duplica`)
-    .then((r) => { toast.success('Profilo duplicato'); carica(); setSel(r.data) }).catch(toast.error)
-  const elimina = (id) => client.delete(`/parametri-gestore/${id}`)
-    .then(() => { toast.info('Profilo eliminato'); setSel(null); carica() }).catch(toast.error)
-  const vediAnteprima = (id) => client.get(`/parametri-gestore/${id}/anteprima`)
-    .then((r) => setAnteprima(r.data)).catch(toast.error)
-
-  return (
-    <div className="space-y-6">
-      <p className="text-gray-600 text-sm">
-        Configurazione del gestore: {N} parametri nazionali ARERA, {G} corrispettivi del gestore.
-      </p>
-
-      <section className="bg-white rounded-xl shadow-sm border p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-gray-800">Profili</h2>
-          <button onClick={() => setSel({ nomeProfilo: 'Nuovo profilo', applicaEsenzioneAccisaResidenti: true, applicaScaglioni: true, arrotondaPerdite: false, quotaFissaSoloNonResidenti: true, quotaPotenzaSoloNonDomestici: true, altrePartiteInImponibile: true, supportaAliquoteMiste: true, usaAliquotaIvaBolletta: true, percentualePerdite: '0.1040', livelloTensioneDefault: 'BT' })}
-            className="btn-sec">Nuovo profilo</button>
-        </div>
-        <ul className="divide-y">
-          {lista.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-2 py-2">
-              <button onClick={() => setSel(p)} className="text-left flex items-center gap-2 min-w-0">
-                {p.predefinito && <Star className="w-4 h-4 shrink-0 text-yellow-500 fill-yellow-400" />}
-                <b className="shrink-0">{p.nomeProfilo}</b> <span className="text-gray-400 text-sm truncate">{p.descrizione}</span>
-              </button>
-              <span className="flex gap-2 text-gray-500 shrink-0">
-                <button title="Anteprima" onClick={() => vediAnteprima(p.id)}><Eye className="w-4 h-4" /></button>
-                <button title="Duplica" onClick={() => duplica(p.id)}><Copy className="w-4 h-4" /></button>
-                {!p.predefinito && <button title="Predefinito" onClick={() => setPredefinito(p.id)}><Star className="w-4 h-4" /></button>}
-                <button title="Elimina" onClick={() => elimina(p.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {anteprima && (
-        <section className="bg-blue-50 border border-blue-200 rounded-xl p-5">
-          <h2 className="font-semibold mb-2">Anteprima su consumo campione (24/37/33 kWh, 3 kW)</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-            <Info l="Imponibile" v={anteprima.imponibile} />
-            <Info l="IVA" v={anteprima.iva} />
-            <Info l="Totale" v={anteprima.totale} />
-          </div>
-        </section>
-      )}
-
-      {sel && (
-        <section className="bg-white rounded-xl shadow-sm border p-5 space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-800">Modifica profilo</h2>
-            <button onClick={salva} className="btn-pri flex items-center gap-1"><Save className="w-4 h-4" /> Salva</button>
-          </div>
-          <div className="grid md:grid-cols-3 gap-3">
-            <label className="text-sm block"><span className="text-gray-500">Nome profilo</span>
-              <input className="input" value={sel.nomeProfilo || ''} onChange={(e) => set('nomeProfilo', e.target.value)} /></label>
-            <label className="text-sm block"><span className="text-gray-500">Descrizione</span>
-              <input className="input" value={sel.descrizione || ''} onChange={(e) => set('descrizione', e.target.value)} /></label>
-            <label className="text-sm block"><span className="text-gray-500">Gestore</span>
-              <input className="input" value={sel.nomeGestore || ''} onChange={(e) => set('nomeGestore', e.target.value)} /></label>
-          </div>
-
-          {SEZIONI.map((s) => (
-            <details key={s.t} className="border rounded-lg" open>
-              <summary className="cursor-pointer px-4 py-2 font-medium text-gray-700 bg-gray-50">{s.t}</summary>
-              <div className="grid md:grid-cols-3 gap-3 p-4">
-                {s.campi.map((c) => (
-                  <div key={c.k}>
-                    {c.tipo === 'bool' ? (
-                      <label className="text-sm flex items-center gap-2 mt-5">
-                        <input type="checkbox" checked={!!sel[c.k]} onChange={(e) => set(c.k, e.target.checked)} />
-                        <span>{c.o} {c.l}</span>
-                      </label>
-                    ) : (
-                      <label className="text-sm block">
-                        <span className="text-gray-500">{c.o} {c.l}</span>
-                        <input className="input" type="number" step="0.000001" placeholder={c.ph}
-                          value={sel[c.k] ?? ''} onChange={(e) => set(c.k, e.target.value)} />
-                      </label>
+        {gestori.length === 0 ? (
+          <div className="card text-center text-gray-500 py-12">Nessun gestore configurato.</div>
+        ) : (
+          <div className="space-y-3">
+            {gestori.map((g) => (
+              <div key={g.id} className="card flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-lg truncate">{g.nomeGestore || 'Senza nome'}</h3>
+                    {g.predefinito && (
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-energy-blue/10 text-energy-blue flex items-center gap-1 shrink-0">
+                        <Star className="w-3 h-3" /> predefinito
+                      </span>
                     )}
                   </div>
-                ))}
+                  <p className="text-gray-500 text-sm truncate">{g.nomeProfilo}</p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {g.numeroOfferte} {g.numeroOfferte === 1 ? 'offerta' : 'offerte'}
+                    {g.commercializzazioneMese != null && ` · commercializzazione €${g.commercializzazioneMese}/mese`}
+                  </p>
+                </div>
+                <button onClick={() => apri(g.id)} className="btn-sec flex items-center gap-2 shrink-0">
+                  <Eye className="w-4 h-4" /> <span className="hidden sm:inline">Visualizza dettaglio</span>
+                </button>
               </div>
-            </details>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ═══════════════ DETTAGLIO ═══════════════
+  if (!dett) return <div className="text-center py-12">Caricamento...</div>
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <button onClick={tornaLista} className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4">
+        <ArrowLeft className="w-4 h-4" /> Torna alla lista
+      </button>
+
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+          <Building2 className="w-8 h-8 text-energy-blue" />
+          {dett.nomeGestore || 'Gestore'}
+          {dett.predefinito && (
+            <span className="px-2 py-0.5 rounded-full text-xs bg-energy-blue/10 text-energy-blue flex items-center gap-1">
+              <Star className="w-3 h-3" /> predefinito
+            </span>
+          )}
+        </h1>
+        {!editMode ? (
+          <div className="flex gap-2">
+            <button onClick={() => attivaModifica()} className="btn-primary flex items-center gap-2">
+              <Pencil className="w-4 h-4" /> Modifica
+            </button>
+            {!dett.predefinito && (
+              <button onClick={() => setPredefinito(dett.id)} className="btn-sec" title="Imposta predefinito"><Star className="w-4 h-4" /></button>
+            )}
+            <button onClick={() => duplica(dett.id)} className="btn-sec" title="Duplica"><Copy className="w-4 h-4" /></button>
+            <button onClick={() => elimina(dett.id)} className="btn-sec text-red-600" title="Elimina"><Trash2 className="w-4 h-4" /></button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={salva} className="btn-primary flex items-center gap-2"><Save className="w-4 h-4" /> Salva</button>
+            <button onClick={annulla} className="btn-sec flex items-center gap-2"><X className="w-4 h-4" /> Annulla</button>
+          </div>
+        )}
+      </div>
+
+      {/* Anagrafica */}
+      <Sez titolo="Anagrafica">
+        {editMode ? (
+          <div className="grid md:grid-cols-2 gap-4">
+            <Campo label="Nome gestore"><input className="input" value={editData.nomeGestore} onChange={(e) => setEditData({ ...editData, nomeGestore: e.target.value })} /></Campo>
+            <Campo label="Nome profilo"><input className="input" value={editData.nomeProfilo} onChange={(e) => setEditData({ ...editData, nomeProfilo: e.target.value })} /></Campo>
+            <Campo label="Descrizione" full><textarea className="input" rows={2} value={editData.descrizione} onChange={(e) => setEditData({ ...editData, descrizione: e.target.value })} /></Campo>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            <Ro label="Nome gestore" v={dett.nomeGestore} />
+            <Ro label="Nome profilo" v={dett.nomeProfilo} />
+            <Ro label="Descrizione" v={dett.descrizione} full />
+            <Ro label="Predefinito" v={dett.predefinito ? 'Sì' : 'No'} />
+          </div>
+        )}
+      </Sez>
+
+      {/* Config commerciale */}
+      <Sez titolo="Configurazione commerciale">
+        {editMode ? (
+          <div className="grid md:grid-cols-3 gap-4">
+            <Campo label="Commercializzazione (€/mese)"><input type="number" step="0.0001" className="input" value={editData.commercializzazioneMese} onChange={(e) => setEditData({ ...editData, commercializzazioneMese: e.target.value })} /></Campo>
+            <Campo label="PCV variabile (€/kWh)"><input type="number" step="0.0001" className="input" value={editData.pcvVariabile} onChange={(e) => setEditData({ ...editData, pcvVariabile: e.target.value })} /></Campo>
+            <Campo label="Spread energia (€/kWh)"><input type="number" step="0.000001" className="input" value={editData.spreadEnergia} onChange={(e) => setEditData({ ...editData, spreadEnergia: e.target.value })} /></Campo>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-4">
+            <Ro label="Commercializzazione (€/mese)" v={dett.commercializzazioneMese} mono />
+            <Ro label="PCV variabile (€/kWh)" v={dett.pcvVariabile} mono />
+            <Ro label="Spread energia (€/kWh)" v={dett.spreadEnergia} mono />
+          </div>
+        )}
+      </Sez>
+
+      {/* Flag */}
+      <Sez titolo="Flag di conformità">
+        <div className="grid md:grid-cols-2 gap-3">
+          {FLAG.map((f) => (
+            <div key={f.key} className="flex items-center justify-between border-b border-gray-100 py-2">
+              <span className="text-sm text-gray-700">{f.label}</span>
+              {editMode ? (
+                <input type="checkbox" checked={!!editData[f.key]} onChange={(e) => setEditData({ ...editData, [f.key]: e.target.checked })} />
+              ) : (
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${dett[f.key] ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  {dett[f.key] ? 'Attivo' : 'Disattivo'}
+                </span>
+              )}
+            </div>
           ))}
-        </section>
+        </div>
+      </Sez>
+
+      {/* Placeholder parametri nazionali (prompt 2) */}
+      <div className="card mb-6 bg-blue-50 border border-blue-100 flex items-start gap-3">
+        <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+        <p className="text-sm text-blue-800">
+          I parametri nazionali ARERA (accise, trasporto, oneri, dispacciamento, IVA, perdite)
+          si gestiscono nell'area dedicata.
+        </p>
+      </div>
+
+      {/* Offerte */}
+      <Sez titolo="Offerte" azione={!editMode && (
+        <button onClick={() => setOffertaForm({ ...OFFERTA_VUOTA })} className="btn-pri text-sm flex items-center gap-2">
+          <Plus className="w-4 h-4" /> Aggiungi offerta
+        </button>
+      )}>
+        {dett.offerte?.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 py-2 text-left">Fornitore</th>
+                  <th className="px-3 py-2 text-left">Offerta</th>
+                  <th className="px-3 py-2 text-left">Tipo</th>
+                  <th className="px-3 py-2 text-left">Tariffa</th>
+                  <th className="px-3 py-2 text-right">Prezzo/Spread</th>
+                  <th className="px-3 py-2 text-right">PCV/anno</th>
+                  <th className="px-3 py-2 text-right">Azioni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dett.offerte.map((o) => (
+                  <tr key={o.id} className="border-t hover:bg-gray-50">
+                    <td className="px-3 py-2 font-medium">{o.nomeFornitore}</td>
+                    <td className="px-3 py-2">{o.nomeOfferta}</td>
+                    <td className="px-3 py-2">{o.tipoOfferta === 'PREZZO_FISSO' ? 'Fisso' : o.tipoOfferta === 'INDICIZZATA_PUN' ? 'PUN' : 'Mista'}</td>
+                    <td className="px-3 py-2">{o.tipoTariffa}</td>
+                    <td className="px-3 py-2 text-right font-mono">
+                      {o.prezzoFissoF0 ? `€${o.prezzoFissoF0}` : o.prezzoFissoF1 ? `€${o.prezzoFissoF1}` : o.spreadPunF0 ? `+€${o.spreadPunF0}` : '-'}
+                    </td>
+                    <td className="px-3 py-2 text-right font-mono">{o.pcvAnnuo != null ? `€${o.pcvAnnuo}` : '-'}</td>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <button onClick={() => setOffertaForm({ ...OFFERTA_VUOTA, ...o })} className="text-gray-500 hover:text-energy-blue mr-3" title="Modifica"><Pencil className="w-4 h-4 inline" /></button>
+                      <button onClick={() => eliminaOfferta(o.id)} className="text-red-500 hover:text-red-700" title="Elimina"><Trash2 className="w-4 h-4 inline" /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">Nessuna offerta collegata a questo gestore.</p>
+        )}
+      </Sez>
+
+      {/* Modale offerta */}
+      {offertaForm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 p-4">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">{offertaForm.id ? 'Modifica offerta' : 'Nuova offerta'}</h3>
+              <button onClick={() => setOffertaForm(null)}><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={salvaOfferta} className="grid md:grid-cols-2 gap-4">
+              <input placeholder="Fornitore" className="input" required value={offertaForm.nomeFornitore} onChange={(e) => setOffertaForm({ ...offertaForm, nomeFornitore: e.target.value })} />
+              <input placeholder="Nome offerta" className="input" required value={offertaForm.nomeOfferta} onChange={(e) => setOffertaForm({ ...offertaForm, nomeOfferta: e.target.value })} />
+              <select className="input" value={offertaForm.tipoOfferta} onChange={(e) => setOffertaForm({ ...offertaForm, tipoOfferta: e.target.value })}>
+                <option value="PREZZO_FISSO">Prezzo fisso</option>
+                <option value="INDICIZZATA_PUN">Indicizzata PUN</option>
+                <option value="MISTA">Mista</option>
+              </select>
+              <select className="input" value={offertaForm.tipoTariffa} onChange={(e) => setOffertaForm({ ...offertaForm, tipoTariffa: e.target.value })}>
+                <option value="MONORARIA">Monoraria</option>
+                <option value="BIORARIA">Bioraria</option>
+                <option value="TRIORARIA">Trioraria</option>
+              </select>
+              <input placeholder="Prezzo fisso F0 (€/kWh)" type="number" step="0.0001" className="input" value={offertaForm.prezzoFissoF0} onChange={(e) => setOffertaForm({ ...offertaForm, prezzoFissoF0: e.target.value })} />
+              <input placeholder="Spread PUN F0 (€/kWh)" type="number" step="0.0001" className="input" value={offertaForm.spreadPunF0} onChange={(e) => setOffertaForm({ ...offertaForm, spreadPunF0: e.target.value })} />
+              <input placeholder="Prezzo fisso F1 (€/kWh)" type="number" step="0.0001" className="input" value={offertaForm.prezzoFissoF1} onChange={(e) => setOffertaForm({ ...offertaForm, prezzoFissoF1: e.target.value })} />
+              <input placeholder="Prezzo fisso F23 (€/kWh)" type="number" step="0.0001" className="input" value={offertaForm.prezzoFissoF23} onChange={(e) => setOffertaForm({ ...offertaForm, prezzoFissoF23: e.target.value })} />
+              <input placeholder="PCV annuo (€/anno)" type="number" step="0.01" className="input" value={offertaForm.pcvAnnuo} onChange={(e) => setOffertaForm({ ...offertaForm, pcvAnnuo: e.target.value })} />
+              <input placeholder="Condizioni speciali" className="input md:col-span-2" value={offertaForm.condizioniSpeciali || ''} onChange={(e) => setOffertaForm({ ...offertaForm, condizioniSpeciali: e.target.value })} />
+              <div className="md:col-span-2 flex gap-2 justify-end">
+                <button type="button" onClick={() => setOffertaForm(null)} className="btn-sec">Annulla</button>
+                <button type="submit" className="btn-pri">Salva offerta</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   )
 }
 
-const Info = ({ l, v }) => (
-  <div className="bg-white rounded-lg p-3 border">
-    <div className="text-gray-500 text-xs">{l}</div>
-    <div className="font-bold">{v != null ? Number(v).toFixed(2) : '-'} €</div>
+const Sez = ({ titolo, azione, children }) => (
+  <div className="card mb-6">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-lg font-semibold">{titolo}</h2>
+      {azione}
+    </div>
+    {children}
+  </div>
+)
+const Campo = ({ label, children, full }) => (
+  <div className={full ? 'md:col-span-2' : ''}>
+    <label className="label">{label}</label>
+    {children}
+  </div>
+)
+const Ro = ({ label, v, mono, full }) => (
+  <div className={full ? 'md:col-span-2' : ''}>
+    <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+    <p className={`text-gray-900 ${mono ? 'font-mono' : ''}`}>{v != null && v !== '' ? v : '—'}</p>
   </div>
 )
 
