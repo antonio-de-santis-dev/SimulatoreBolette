@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Zap, BarChart3, History, List, FileText, SlidersHorizontal } from 'lucide-react'
+import { Zap, BarChart3, History, FileText, Building2 } from 'lucide-react'
 
+// "Il mio gestore" unifica le vecchie voci Offerte e Parametri.
 const navItems = [
   { path: '/', label: 'Home', icon: Zap },
   { path: '/bollette', label: 'Bollette', icon: FileText },
   { path: '/confronto', label: 'Confronto', icon: BarChart3 },
-  { path: '/offerte', label: 'Offerte', icon: List },
-  { path: '/parametri', label: 'Parametri', icon: SlidersHorizontal },
+  { path: '/gestore', label: 'Il mio gestore', icon: Building2 },
   { path: '/storico', label: 'Storico', icon: History },
 ]
 
@@ -60,7 +60,7 @@ function Navbar() {
         className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t shadow-[0_-1px_4px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]"
         aria-label="Navigazione principale"
       >
-        <div className="grid grid-cols-6">
+        <div className="grid grid-cols-5">
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.path)

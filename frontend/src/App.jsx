@@ -1,11 +1,10 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import { ToastProvider } from './components/Toast'
 import Home from './pages/Home'
 import BolletteConcorrenti from './pages/BolletteConcorrenti'
 import Confronto from './pages/Confronto'
-import Offerte from './pages/Offerte'
-import Parametri from './pages/Parametri'
+import Gestore from './pages/Gestore'
 import Storico from './pages/Storico'
 import Simulatore from './pages/Simulatore'
 
@@ -19,8 +18,10 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/bollette" element={<BolletteConcorrenti />} />
             <Route path="/confronto" element={<Confronto />} />
-            <Route path="/offerte" element={<Offerte />} />
-            <Route path="/parametri" element={<Parametri />} />
+            <Route path="/gestore" element={<Gestore />} />
+            {/* Aree unificate: le vecchie rotte reindirizzano a "Il mio gestore" */}
+            <Route path="/offerte" element={<Navigate to="/gestore" replace />} />
+            <Route path="/parametri" element={<Navigate to="/gestore" replace />} />
             <Route path="/storico" element={<Storico />} />
             <Route path="/simulatore" element={<Simulatore />} />
           </Routes>

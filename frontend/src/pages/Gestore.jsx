@@ -1,9 +1,193 @@
 import { useEffect, useState } from 'react'
 import client from '../api/client'
 import { useToast } from '../components/Toast'
-import { Star, Copy, Trash2, Eye, Save } from 'lucide-react'
+import { Plus, Trash2, Star, Copy, Eye, Save, List, SlidersHorizontal } from 'lucide-react'
 
-// Definizione dei campi per sezione, con badge origine (nazionale/gestore)
+/**
+ * Area unificata "Il mio gestore": raccoglie in un'unica pagina
+ *  - le OFFERTE commerciali del gestore (ex pagina Offerte)
+ *  - la CONFIGURAZIONE del gestore / profili parametri (ex pagina Parametri)
+ *
+ * Il Confronto (comparatore 2 bollette) e l'inserimento Bollette restano
+ * pagine separate e invariati. I dati nazionali ARERA (badge 🏛️) restano
+ * dentro il profilo per ora: la loro estrazione e' prevista in un intervento
+ * successivo.
+ */
+function Gestore() {
+  const [tab, setTab] = useState('offerte')
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Il mio gestore</h1>
+        <p className="text-gray-600">
+          Le tue offerte e la configurazione del gestore in un unico posto.
+        </p>
+      </div>
+
+      {/* Selettore vista */}
+      <div className="inline-flex rounded-lg border bg-white p-1 shadow-sm">
+        <button
+          onClick={() => setTab('offerte')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            tab === 'offerte' ? 'bg-energy-blue text-white' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <List className="w-4 h-4" /> Offerte
+        </button>
+        <button
+          onClick={() => setTab('config')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            tab === 'config' ? 'bg-energy-blue text-white' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          <SlidersHorizontal className="w-4 h-4" /> Configurazione
+        </button>
+      </div>
+
+      {tab === 'offerte' ? <SezioneOfferte /> : <SezioneConfigurazione />}
+    </div>
+  )
+}
+
+/* ═══════════════════════ OFFERTE ═══════════════════════ */
+
+function SezioneOfferte() {
+  const toast = useToast()
+  const [offerte, setOfferte] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const vuota = {
+    nomeFornitore: '', nomeOfferta: '', tipoOfferta: 'PREZZO_FISSO',
+    tipoTariffa: 'MONORARIA', prezzoFissoF0: '', spreadPunF0: '', pcvAnnuo: '',
+  }
+  const [formData, setFormData] = useState(vuota)
+
+  const load = () => client.get('/offerte').then((r) => setOfferte(r.data)).catch(toast.error)
+  useEffect(() => { load() }, [])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    client.post('/offerte', {
+      ...formData,
+      prezzoFissoF0: formData.prezzoFissoF0 || null,
+      spreadPunF0: formData.spreadPunF0 || null,
+      pcvAnnuo: formData.pcvAnnuo || null,
+    }).then(() => {
+      toast.success('Offerta salvata')
+      load()
+      setShowForm(false)
+      setFormData(vuota)
+    }).catch(toast.error)
+  }
+
+  const deleteOfferta = (id) => {
+    if (!confirm('Eliminare questa offerta?')) return
+    client.delete(`/offerte/${id}`).then(() => { toast.info('Offerta eliminata'); load() }).catch(toast.error)
+  }
+
+  return (
+    <div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-800">Offerte commerciali</h2>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary w-full md:w-auto">
+          <Plus className="w-5 h-5 inline mr-2" /> Nuova offerta
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card mb-6 bg-gray-50">
+          <form onSubmit={handleSubmit} className="grid md:grid-cols-3 gap-4">
+            <input placeholder="Fornitore" value={formData.nomeFornitore}
+              onChange={(e) => setFormData({ ...formData, nomeFornitore: e.target.value })}
+              className="input-field" required />
+            <input placeholder="Nome offerta" value={formData.nomeOfferta}
+              onChange={(e) => setFormData({ ...formData, nomeOfferta: e.target.value })}
+              className="input-field" required />
+            <select value={formData.tipoOfferta}
+              onChange={(e) => setFormData({ ...formData, tipoOfferta: e.target.value })}
+              className="input-field">
+              <option value="PREZZO_FISSO">Prezzo fisso</option>
+              <option value="INDICIZZATA_PUN">Indicizzata PUN</option>
+            </select>
+            <select value={formData.tipoTariffa}
+              onChange={(e) => setFormData({ ...formData, tipoTariffa: e.target.value })}
+              className="input-field">
+              <option value="MONORARIA">Monoraria</option>
+              <option value="BIORARIA">Bioraria</option>
+              <option value="TRIORARIA">Trioraria</option>
+            </select>
+            <input placeholder="Prezzo fisso €/kWh" type="number" step="0.0001"
+              value={formData.prezzoFissoF0}
+              onChange={(e) => setFormData({ ...formData, prezzoFissoF0: e.target.value })}
+              className="input-field" />
+            <input placeholder="Spread PUN €/kWh" type="number" step="0.0001"
+              value={formData.spreadPunF0}
+              onChange={(e) => setFormData({ ...formData, spreadPunF0: e.target.value })}
+              className="input-field" />
+            <input placeholder="PCV €/anno" type="number" step="0.01"
+              value={formData.pcvAnnuo}
+              onChange={(e) => setFormData({ ...formData, pcvAnnuo: e.target.value })}
+              className="input-field" />
+            <div className="md:col-span-3">
+              <button type="submit" className="btn-primary">Salva offerta</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {offerte.length === 0 ? (
+        <div className="card text-center text-gray-500">Nessuna offerta inserita.</div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {offerte.map((o) => (
+            <div key={o.id} className="card hover:shadow-lg transition-shadow">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-lg">{o.nomeFornitore}</h3>
+                <button onClick={() => deleteOfferta(o.id)} className="text-red-500 hover:text-red-700">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-gray-600 text-sm mb-3">{o.nomeOfferta}</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Tipo:</span>
+                  <span className={`font-medium ${
+                    o.tipoOfferta === 'PREZZO_FISSO' ? 'text-energy-blue' : 'text-energy-green'
+                  }`}>{o.tipoOfferta === 'PREZZO_FISSO' ? 'Prezzo fisso' : 'Indicizzata PUN'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Tariffa:</span>
+                  <span>{o.tipoTariffa}</span>
+                </div>
+                {o.prezzoFissoF0 != null && Number(o.prezzoFissoF0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Prezzo F0:</span>
+                    <span className="font-mono">€{o.prezzoFissoF0}/kWh</span>
+                  </div>
+                )}
+                {o.spreadPunF0 != null && Number(o.spreadPunF0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Spread PUN:</span>
+                    <span className="font-mono">+€{o.spreadPunF0}/kWh</span>
+                  </div>
+                )}
+                {o.pcvAnnuo != null && Number(o.pcvAnnuo) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">PCV:</span>
+                    <span className="font-mono">€{o.pcvAnnuo}/anno</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ═══════════════════════ CONFIGURAZIONE (profili parametri) ═══════════════════════ */
+
 const N = '🏛️', G = '🏢'
 const SEZIONI = [
   { t: 'Flag di conformità (normativa vs Excel)', campi: [
@@ -58,7 +242,7 @@ const SEZIONI = [
   ] },
 ]
 
-function Parametri() {
+function SezioneConfigurazione() {
   const toast = useToast()
   const [lista, setLista] = useState([])
   const [sel, setSel] = useState(null)
@@ -83,11 +267,10 @@ function Parametri() {
     .then((r) => setAnteprima(r.data)).catch(toast.error)
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Parametri del gestore</h1>
-        <p className="text-gray-600">Sorgente B — configurazione: {N} parametri nazionali ARERA, {G} corrispettivi del gestore.</p>
-      </div>
+    <div className="space-y-6">
+      <p className="text-gray-600 text-sm">
+        Configurazione del gestore: {N} parametri nazionali ARERA, {G} corrispettivi del gestore.
+      </p>
 
       <section className="bg-white rounded-xl shadow-sm border p-5">
         <div className="flex items-center justify-between mb-3">
@@ -175,4 +358,4 @@ const Info = ({ l, v }) => (
   </div>
 )
 
-export default Parametri
+export default Gestore
